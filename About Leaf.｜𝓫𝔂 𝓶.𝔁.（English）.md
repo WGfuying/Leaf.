@@ -1,0 +1,82 @@
+**About Leaf.**
+- *by m.x.*
+- **"In an age when everyone is building platforms and ecosystems — what are we building?"**
+- A guiding question. A small lighthouse, so we never lose our way, never forget the first heartbeat that started this.
+  - Make something with **no AI and zero noise** — nothing that ever feels like a chore, nothing you'd tire of and close forever.
+  - Make something **zero-paywall and open-source** — we will never ask for your money, never let you lie awake worrying about hidden charges. We'd rather earn your trust than your wallet.
+  - And leave the door open: so anyone with a spark in their chest can **fork this project anytime** and grow it further — because most of what I know, the open-source community taught me.
+  - Make something **Web + cloud first**, so even tired old devices can run it like a breeze; and keep **one same quiet experience across four shores — desktop, pad, phone, and web** — so using it feels safe, easy, unbothered.
+  - Hold to **"Less is more."** Build a tool, not a platform. Use it, then go live your life.
+- **What are our kindred predecessors doing?**
+  - *Walk the old paths, keep the gold, sweep away the dust, and let history hold the mirror.*
+  - **Mubu**
+    - *Minimal input. Structured thinking. Visual clarity.*
+    - **Worth learning:**
+      - One experience across four shores (desktop, pad, phone, web) — perfectly unified, easy to pick up, no walking in circles.
+      - Markdown support — input that stays minimal and swift.
+      - Outline notes as the backbone, training structured thinking, so you think clearer and see all the way through.
+    - **Not worth learning:**
+    - Besides outlines, Mubu also grows mind maps. Efficient, truly — but we won't chase "all in one." We hold to "Less is more."
+    - A premium tier (subscription). Free users won't suffer, but the walls are still walls.
+  - **Bear**
+    - *Beautiful design, gentle to learn — a pity it lives locked inside Apple's garden.*
+    - **Worth learning:**
+      - Plain text & Markdown first, with syntax hidden away, so the page stays pure and no symbols shout at you.
+      - A clear, loud stance on privacy: your notes belong to you alone. No prying eyes, no secret uploads to strangers' servers, no data sold behind your back. That is how trust is grown.
+      - A zero-noise focus mode — the moment you open it, you *focus on writing*. Just you and the page.
+      - Lightweight tags, so you can sort your cards freely instead of getting lost in the folder labyrinths of older tools.
+      - Open, plain-text formats — your notes may leave whenever you wish. No locks. No hostages.
+    - **Not worth learning:**
+    - Bear Pro puts the basics — sync, themes, encryption, export — behind a subscription. For friends with thinner wallets, that is how distrust is grown.
+    - Locked in Apple's "walled garden": it only runs on Apple devices, and cloud sync leans on iCloud, so your notes leave your own hands. For anyone outside the ecosystem, the door is heavy. A web version is in beta, but when it finally ships, it too will ask for money.
+    - Free users can write, but sync, themes, and export stay out of reach. Not unusable — just never whole.
+    - Wiki-links, backlinks, personal wikis, knowledge management — the scope keeps creeping toward "platform," against "Less is more."
+    - Thirty-plus themes and custom icons, a paywall for cosmetics. It does care about writing — but it also piles on makeup.
+  - **flomo**
+    - *Card notes. Minimal capture for shards of inspiration. Less is more.*
+    - **Worth learning:**
+      - Card notes — catch your shards of inspiration anytime, anywhere.
+      - "Less is more" — open it and you *focus on the task*, on recording, with nothing shouting over your shoulder.
+      - flomo becomes a Weibo or Twitter you keep for yourself; jot down whatever you like. It truly earns its titles — "a stream of recorded thoughts," "a thinking tool."
+    - **Not worth learning:**
+    - No Markdown. Its creed is cards + minimal capture, but for some of us (me included), the tool never quite fits the hand.
+    - Membership and AI features. We believe some people need them — but we'd rather not build something that makes trust hard.
+- **Why "Web + cloud first"?**
+  - *Say the creed out loud, so we never drift from the first heart.*
+    - We chose "Web + cloud first" to take care of friends on old devices, to stay free of ecosystem walls, and to take as little space on your machine as possible. Of course — this doesn't mean we'll rule out a standalone app someday.
+- **Our stance on AI**
+  - *Saying it plainly: why we're making Leaf. — an AI-free "thinking tool," purely for recording and looking back.*
+    - We're not blind to the tide. AI is the great wave of now, and yes — in some things it is truly brilliant. But the market already overflows with good, successful products that folded AI in — flomo, Notion, and the rest. We don't believe the world needs one more of us doing the same.
+    - So what are we doing instead?
+      - First, sit with a question: have you noticed — you seem to love thinking for yourself a little less each day?
+      - Picture it: your boss sends you a PPT long enough to scroll forever. What do you do?
+      - One click, toss it to AI, let it summarize — maybe adding, "and make it something I can actually understand"?
+      - That's where we all are now: more and more of us, using AI with practiced hands.
+      - But here's the catch — the way we use it so smoothly is *outsourcing our brains*. AI becomes the one who thinks; our brains only sign off on the deliverables. And that makes us lazier, slowly, softly.
+      - Like the memo I left in flomo:
+        ![image-1](https://api2.mubu.com/v3/document_image/041220fb-7685-4b68-bd31-b69e022515a3.jpeg)
+      - Yes. Precisely because this is the AI age, *your* thinking is the rarest thing left.
+      - AI has read every book in the world — but it doesn't have the tiny context that is only yours. That is exactly why we're building an AI-free "thinking tool."
+      - To be fair, I'm not some AI-hater. This whole product is being built with WorkBuddy's project features.
+      - I just don't want AI *inside* this product. It's a quiet place for you to record and look back — it doesn't need a machine whispering in the middle.
+      - Also — I'm a student. I don't have the money to run servers for you all. Please forgive me. 🙏
+- **Why Markdown?**
+  - *Why Leaf. speaks Markdown, and the creed behind it.*
+    - We know some will raise an eyebrow at Markdown inside Leaf. — "isn't that against less is more?"
+    - But our creed is: keep "less is more," and still be kind to every single friend who uses it.
+    - Markdown is one of the most widely spoken formats on the internet, and it's gentle: a few symbols, and in any friendly editor or viewer, your words gain **bold**, *italic*, and quote.
+    - And we'll add a switch, the way Mubu does — if you don't want Markdown, turn it off and forget it exists. Where the switch lives... we'll show you when the product is done.
+    - p.s. I'm only at the Alpha version right now. It's basically unusable... QAQ
+- **Last choice: open source**
+  - *Looks like burning our own bridge. Really, it's watering the whole ecosystem.*
+    - Going open source is also how we say thank-you to the open-source community.
+    - I've lived on projects born from it, or projects that chose it — F-Droid, DeepSeek, Bitwarden, and so many more — yet I've never truly given back. I've only used, and taken inspiration……
+    - Without them, there is no me today. So I've decided: when Leaf. is finished, I'll open-source it on GitHub and Gitee.
+    - And to anyone with a spark in them: when it's open, fork it, reshape it, make it better than I ever could. That's my small bow of gratitude to the community.
+    - Alright — this About is long. I don't know if you'll make it to the end. If you have any thoughts, leave them in the comments; I'll be waiting. ^^
+- **Leaf.'s Slogan**
+  - *Eight characters that carry our whole attitude toward this product.*
+    - "One leaf lands; one thought takes root."
+    - 「一叶落地，一念生根。」
+  - 𝓫𝔂 𝓶.𝔁.
+    > 微光浮影。
