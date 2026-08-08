@@ -1,4 +1,4 @@
-# Leaf.
+# Leaf.🍃
 
 *「一叶落地，一念生根。」*
 
@@ -81,7 +81,7 @@ Leaf. 不是来替代它们的。它是你在用完它们之后，仍想坐下�
 ---
 
 
-# Leaf.
+# Leaf.🍃
 
 *"A leaf falls. A thought takes root."*
 
