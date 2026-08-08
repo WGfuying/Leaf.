@@ -18,7 +18,9 @@ Web 优先，云端同步，老设备友好。纯文本与 Markdown 为骨，不
 市面上的笔记工具很多，但每一款都有它自己的方向：
 
 · flomo 让你无压力输入，但它的 AI 方向和 Markdown 缺失让你犹豫。
+
 · 幕布 历经两次卖身，依然保持独立运营，但大纲笔记不是所有人的需求。
+
 · 熊掌记 是 Markdown 笔记里的一汪清流，但它锁在苹果生态里。
 
 Leaf. 不是来替代它们的。它是你在用完它们之后，仍想坐下来写点东西时，顺手打开的那个地方。
@@ -28,8 +30,11 @@ Leaf. 不是来替代它们的。它是你在用完它们之后，仍想坐下�
 **Leaf. 不是什么**
 
 · 不是 AI 笔记工具
+
 · 不是 All-in-One 平台
+
 · 不是付费订阅产品
+
 · 不是苹果生态专属
 
 它只是一片叶子，落下来，接住你落下来的念头。
@@ -57,7 +62,9 @@ Leaf. 不是来替代它们的。它是你在用完它们之后，仍想坐下�
 **技术选型**
 
 · 纯文本 + Markdown：你写什么，它就存什么。不额外加层。
+
 · 云端同步：登录即可访问，不依赖单台设备。
+
 · 轻量：不安装，不更新，不后台运行。
 
 ---
@@ -65,8 +72,11 @@ Leaf. 不是来替代它们的。它是你在用完它们之后，仍想坐下�
 **路线图**
 
 ☐ Markdown 解析引擎完善
+
 ☐ 本地数据导出功能
+
 ☐ 移动端适配优化
+
 ☐ 独立域名配置
 
 ---
@@ -101,7 +111,9 @@ Web-first, cloud-sync, old-device friendly. Plain text and Markdown at its core.
 There are plenty of note-taking tools out there, but each one has its own direction:
 
 · flomo lets you write without pressure, but its AI direction and lack of Markdown support leave you hesitant.
+
 · Mubu has survived two acquisitions and still runs independently, but outlines aren’t for everyone.
+
 · Bear is a stream of clean water in the Markdown world, but it’s locked inside the Apple ecosystem.
 
 Leaf. isn’t here to replace them. It’s the place you open when you’ve used them all and still want to sit down and write.
@@ -111,8 +123,11 @@ Leaf. isn’t here to replace them. It’s the place you open when you’ve used
 **What Leaf. is not**
 
 · Not an AI note-taking tool
+
 · Not an All-in-One platform
+
 · Not a paid subscription product
+
 · Not Apple-exclusive
 
 It’s just a leaf. It falls. It catches what falls with it.
@@ -140,7 +155,9 @@ It’s just a leaf. It falls. It catches what falls with it.
 **Tech Choices**
 
 · Plain text + Markdown : What you write is what it stores. No extra layers.
+
 · Cloud sync : Log in and access your notes from anywhere. No dependency on a single device.
+
 · Lightweight : No installation, no updates, no background processes.
 
 ---
@@ -148,8 +165,11 @@ It’s just a leaf. It falls. It catches what falls with it.
 **Roadmap**
 
 ☐ Improve Markdown parsing engine
+
 ☐ Add local data export
+
 ☐ Optimize mobile adaptation
+
 ☐ Configure custom domain
 
 ---
