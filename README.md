@@ -1,4 +1,4 @@
-# Leaf.🍃
+# *Leaf. 🍃*
 
 *「一叶落地，一念生根。」*
 
@@ -77,13 +77,13 @@ Leaf.不是来替代它们的。它是你在用完它们之后，仍想坐下来
 
 本项目基于 Apache License 2.0 开源。
 
-𝓫𝔂 𝓶.𝔁.🌕
+𝓫𝔂 𝓶.𝔁. 🌕
 
 
 ---
 
 
-# Leaf.🍃
+# *Leaf. 🍃*
 
 *"A leaf falls. A thought takes root."*
 
@@ -162,4 +162,4 @@ Leaf. isn’t here to replace them. It’s the place you open when you’ve used
 
 This project is open-sourced under the Apache License 2.0.
 
-𝓫𝔂 𝓶.𝔁.🌕
+𝓫𝔂 𝓶.𝔁. 🌕
