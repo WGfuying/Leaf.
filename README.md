@@ -1,4 +1,4 @@
-![Leaf.-Logo](leaf-logo.png)
+![leaf-logo.png](leaf-logo.png)
 
 
 ---
@@ -85,7 +85,7 @@ Leaf.不是来替代它们的。它是你在用完它们之后，仍想坐下来
 
 ---
 
-![Leaf.-Logo](leaf-logo.png)
+![leaf-logo.png](leaf-logo.png)
 
 
 ---
