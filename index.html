@@ -203,12 +203,18 @@
   /* ---------- 卡片 ---------- */
   .card{
     background:var(--paper); border-radius:var(--card-radius);
-    box-shadow:var(--card-shadow); padding:16px 18px; margin-bottom:12px;
+    box-shadow:var(--card-shadow); margin-bottom:12px;
     cursor:pointer; transition:box-shadow .2s, transform .15s; position:relative;
-    border:1px solid rgba(0,0,0,.04);
+    overflow:hidden; border:1px solid rgba(0,0,0,.04);
   }
   .card:active{ transform:scale(.99) }
   .card.pinned{ border-left:3px solid var(--cyan) }
+  .card-face{ background:var(--paper); border-radius:var(--card-radius); padding:16px 18px; transition:transform .25s cubic-bezier(.4,0,.2,1); will-change:transform; }
+  .card-face.swiping{ transition:none; }
+  .card.tint-pin{ background:var(--cyan-soft); }
+  .card.tint-del{ background:#fbeaea; }
+  .card.tint-pin::before{ content:'置顶'; position:absolute; left:20px; top:50%; transform:translateY(-50%); color:var(--cyan); font-weight:600; font-size:14px; letter-spacing:1px; }
+  .card.tint-del::before{ content:'删除'; position:absolute; right:20px; top:50%; transform:translateY(-50%); color:#c0392b; font-weight:600; font-size:14px; letter-spacing:1px; }
   .card .meta{
     display:flex; justify-content:space-between; align-items:center;
     font-size:11.5px; color:var(--muted); margin-bottom:8px;
@@ -216,7 +222,7 @@
   .card .meta-time{ }
   .card .meta-menu{
     opacity:0; transition:opacity .15s; cursor:pointer; padding:2px 4px; border-radius:4px;
-    color:var(--muted);
+    color:var(--muted); border:0; background:none; font:inherit; display:inline-flex; align-items:center;
   }
   .card:hover .meta-menu, .card.show-menu .meta-menu{ opacity:1 }
   .card .meta-menu:active{ color:var(--ink); background:var(--paper-2) }
@@ -232,14 +238,19 @@
     pointer-events:none;
   }
   .card .body.truncated::after{ content:'' }
+  .card .body.expanded{ max-height:none; overflow:visible }
+  .card .body.expanded::after{ content:'' }
   .card .expand{
     display:inline-block; font-size:13px; color:var(--cyan); margin-top:4px;
-    cursor:pointer; font-weight:500;
+    cursor:pointer; font-weight:500; border:0; background:none; font-family:inherit; padding:0;
   }
   .card .acts{ margin-top:10px; display:none; gap:16px; font-size:12.5px; padding-top:8px; border-top:1px solid var(--line) }
   .card:hover .acts, .card.show-menu .acts{ display:flex }
-  .card .acts a{ color:var(--muted); cursor:pointer; text-decoration:none; transition:color .15s }
-  .card .acts a:active{ color:var(--cyan) }
+  .card .acts a, .card .acts button{ color:var(--muted); cursor:pointer; text-decoration:none; transition:color .15s; border:0; background:none; font:inherit; padding:0; }
+  .card .acts a:active, .card .acts button:active{ color:var(--cyan) }
+  .card.trash .acts{ display:flex }                 /* 回收站：操作常驻可见，不必先点 ⋮ */
+  .card.trash .acts button:first-child{ color:var(--cyan); font-weight:600 }  /* 恢复=青色 CTA */
+  .card.trash .acts button:last-child{ color:#c0564f }   /* 彻底删除=警示红 */
 
   /* ---------- FAB 浮动加号按钮（flomo 式） ---------- */
   .fab{
@@ -852,19 +863,40 @@ function renderList(){
     var tags = c.tags.map(function(t){ return '<span class="tag-pill">#'+escapeHtml(t)+'</span>'; }).join('');
     var isLong = c.content.length > 200;
     var acts = view==='trash'
-      ? '<a data-act="restore" data-id="'+c.id+'">恢复</a><a data-act="purge" data-id="'+c.id+'">彻底删除</a>'
-      : '<a data-act="pin" data-id="'+c.id+'">'+(c.pinned?'取消置顶':'置顶')+'</a><a data-act="del" data-id="'+c.id+'">删除</a>';
+      ? '<button type="button" data-act="restore" data-id="'+c.id+'">恢复</button><button type="button" data-act="purge" data-id="'+c.id+'">彻底删除</button>'
+      : '<button type="button" data-act="pin" data-id="'+c.id+'">'+(c.pinned?'取消置顶':'置顶')+'</button><button type="button" data-act="del" data-id="'+c.id+'">删除</button>';
     var dotsSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>';
-    return '<div class="card'+(c.pinned?' pinned':'')+'" data-id="'+c.id+'">'
+    return '<div class="card'+(c.pinned?' pinned':'')+(view==='trash'?' trash':'')+'" data-id="'+c.id+'">'
+      + '<div class="card-face">'
       + '<div class="meta">'
       + '  <span class="meta-time">'+fmtDate(c.updated)+'</span>'
-      + '  <span class="meta-menu">'+dotsSvg+'</span>'
+      + '  <button type="button" class="meta-menu">'+dotsSvg+'</button>'
       + '</div>'
       + (tags ? '<div class="tags">'+tags+'</div>' : '')
       + '<div class="body md'+(isLong?' truncated':'')+'">'+preview+'</div>'
-      + (isLong ? '<span class="expand">展开</span>' : '')
-      + '<div class="acts">'+acts+'</div></div>';
+      + (isLong ? '<button type="button" class="expand">展开</button>' : '')
+      + '<div class="acts">'+acts+'</div>'
+      + '</div></div>';
   }).join('');
+  // 双保险：给每个操作按钮直绑 click，不依赖整条列表的事件冒泡（防御某些渲染器事件委托失效）
+  Array.prototype.forEach.call(wrap.querySelectorAll('[data-act]'), function(b){
+    b.addEventListener('click', function(e){ e.stopPropagation(); runCardAction(b.dataset.act, b.dataset.id); });
+  });
+}
+
+/* ---------- 长 memo 展开 / 收起 ---------- */
+function toggleExpand(card){
+  if(!card) return;
+  var body = card.querySelector('.body');
+  var span = card.querySelector('.expand');
+  if(!body) return;
+  if(body.classList.contains('truncated')){
+    body.classList.remove('truncated'); body.classList.add('expanded');
+    if(span) span.textContent = '收起';
+  } else {
+    body.classList.add('truncated'); body.classList.remove('expanded');
+    if(span) span.textContent = '展开';
+  }
 }
 
 /* ---------- 渲染：标签列表 ---------- */
@@ -928,6 +960,7 @@ function closeEditor(){
   $('editorMask').classList.remove('show');
   document.body.style.overflow = '';
   editingId = null; dirty = false;
+  cardSwipe.fired = false;   // 关编辑器时顺手清掉"吞点击"标记，避免残留到回收站等其它视图
 }
 function setMode(mode){
   $('modeTab').querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.mode===mode); });
@@ -993,6 +1026,14 @@ async function delCard(id, hard){
 }
 async function restoreCard(id){ var c = cards.find(function(x){ return x.id===id; }); if(c){ c.deleted = false; c.updated = now(); await dbPut(c); await refresh(); toast('已恢复'); } }
 async function togglePin(id){ var c = cards.find(function(x){ return x.id===id; }); if(c){ c.pinned = !c.pinned; c.updated = now(); await dbPut(c); await refresh(); } }
+
+  // 卡片操作统一入口：按钮直绑与 #list 委托共用，避免重复分支
+  function runCardAction(act, id){
+    if(act==='del') delCard(id,false);
+    else if(act==='purge') delCard(id,true);
+    else if(act==='restore') restoreCard(id);
+    else if(act==='pin') togglePin(id);
+  }
 
 /* ---------- 每日一叶 ---------- */
 function reviewPool(){ return cards.filter(function(c){ return !c.deleted && c.content.trim().length > 0; }); }
@@ -1296,6 +1337,13 @@ function bind(){
   $('edCancel').onclick = closeEditor;
   $('edSave').onclick = saveCard;
   $('editorMask').onclick = closeEditor;
+  // 点编辑器面板内的空白处（非输入框/按钮/工具）也能关闭
+  $('editor').addEventListener('click', function(e){
+    var t = e.target;
+    if(t.closest('.ed-tools') || t.closest('.ed-btn') || t.closest('.ed-close') || t.closest('.ed-title')
+       || t.id==='edInput' || t.id==='edPreview' || t.id==='edImgInput') return;
+    closeEditor();
+  });
   $('edInput').addEventListener('input', function(e){ dirty = true; try{ $('edPreview').innerHTML = parseMarkdown(e.target.value || ''); }catch(err){ console.error('[Leaf] 预览失败:', err); $('edPreview').textContent = e.target.value; } });
   $('modeTab').querySelectorAll('button').forEach(function(b){ b.onclick = function(){ setMode(b.dataset.mode); }; });
 
@@ -1324,10 +1372,10 @@ function bind(){
 
   // 卡片交互
   $('list').addEventListener('click', function(e){
+    if(cardSwipe.fired){ cardSwipe.fired = false; return; }
     var actEl = e.target.closest('[data-act]');
-    if(actEl){ e.stopPropagation(); var id = actEl.dataset.id, act = actEl.dataset.act;
-      if(act==='del') delCard(id,false); else if(act==='purge') delCard(id,true); else if(act==='restore') restoreCard(id); else if(act==='pin') togglePin(id); return; }
-    if(e.target.classList.contains('expand')){ e.stopPropagation(); var card = e.target.closest('.card'); if(card) openEditor(card.dataset.id); return; }
+    if(actEl){ e.stopPropagation(); runCardAction(actEl.dataset.act, actEl.dataset.id); return; }
+    if(e.target.classList.contains('expand')){ e.stopPropagation(); toggleExpand(e.target.closest('.card')); return; }
     if(e.target.closest('.meta-menu')){
       e.stopPropagation();
       var cardEl = e.target.closest('.card');
@@ -1337,8 +1385,85 @@ function bind(){
       }
       return;
     }
-    var cardEl = e.target.closest('.card'); if(cardEl) openEditor(cardEl.dataset.id);
+    // 点卡片本体：移动端=展开长 memo，桌面端=编辑
+    var cardEl = e.target.closest('.card');
+    if(!cardEl) return;
+    var body = cardEl.querySelector('.body');
+    if(window.innerWidth <= 820){
+      if(body && body.classList.contains('truncated')) toggleExpand(cardEl);
+    } else {
+      openEditor(cardEl.dataset.id);
+    }
   });
+
+  // 卡片滑动手势：右滑置顶 / 左滑删除（仅移动端、非回收站、非边缘）
+  var cardSwipe = { el:null, face:null, startX:0, startY:0, dx:0, tracking:false, fired:false, lpTimer:null };
+  function listTouchStart(e){
+    if(window.innerWidth > 820) return;
+    // 关键修复：每次新手势先清掉上一次可能残留的"吞点击"标记，
+    // 否则进入回收站后第一次点"恢复/彻底删除"会被误吞（点击无反应）
+    cardSwipe.fired = false; cardSwipe.tracking = false;
+    if(view==='trash') return;
+    if($('sidebar').classList.contains('open')) return;
+    if(e.touches[0].clientX <= 60) return;                 // 左缘留给侧栏
+    var t = e.target;
+    if(t.closest('[data-act]') || t.closest('.meta-menu') || t.closest('.expand')) return;
+    var card = t.closest('.card');
+    if(!card) return;
+    cardSwipe.el = card;
+    cardSwipe.face = card.querySelector('.card-face');
+    cardSwipe.startX = e.touches[0].clientX;
+    cardSwipe.startY = e.touches[0].clientY;
+    cardSwipe.dx = 0; cardSwipe.tracking = true;
+    // 长按=编辑（移动端）：按住不动 450ms 即打开编辑器
+    clearTimeout(cardSwipe.lpTimer);
+    cardSwipe.lpTimer = setTimeout(function(){
+      if(!cardSwipe.tracking) return;
+      cardSwipe.fired = true;            // 吞掉随后的 click，避免又展开
+      cardSwipe.tracking = false;
+      listSwipeReset();
+      openEditor(card.dataset.id);
+    }, 450);
+  }
+  function listTouchMove(e){
+    if(!cardSwipe.tracking) return;
+    var dx = e.touches[0].clientX - cardSwipe.startX;
+    var dy = e.touches[0].clientY - cardSwipe.startY;
+    if(Math.abs(dy) > Math.abs(dx) * 1.5){ cardSwipe.tracking = false; clearTimeout(cardSwipe.lpTimer); listSwipeReset(); return; } // 竖向滚动优先
+    if(Math.abs(dx) > 10 || Math.abs(dy) > 10) clearTimeout(cardSwipe.lpTimer); // 开始移动即取消长按，交给滚动/滑动
+    e.preventDefault();
+    cardSwipe.dx = Math.max(-180, Math.min(180, dx));
+    cardSwipe.face.classList.add('swiping');
+    cardSwipe.face.style.transform = 'translateX('+cardSwipe.dx+'px)';
+    cardSwipe.el.classList.toggle('tint-pin', cardSwipe.dx > 0);
+    cardSwipe.el.classList.toggle('tint-del', cardSwipe.dx < 0);
+  }
+  function listTouchEnd(){
+    clearTimeout(cardSwipe.lpTimer);
+    if(!cardSwipe.tracking) return;
+    cardSwipe.tracking = false;
+    var dx = cardSwipe.dx;
+    cardSwipe.face.classList.remove('swiping');
+    var actionT = Math.min(window.innerWidth * 0.28, 120);
+    if(Math.abs(dx) >= actionT){
+      var id = cardSwipe.el.dataset.id;
+      cardSwipe.fired = true;                              // 吞掉随后可能的 click
+      listSwipeReset();
+      if(dx > 0) togglePin(id); else delCard(id, false);   // 软删，进回收站可恢复
+    } else {
+      if(Math.abs(dx) > 8) cardSwipe.fired = true;         // 拖动过则吞点击
+      listSwipeReset();
+    }
+  }
+  function listSwipeReset(){
+    if(cardSwipe.face) cardSwipe.face.style.transform = '';
+    if(cardSwipe.el) cardSwipe.el.classList.remove('tint-pin','tint-del');
+    cardSwipe.el = null; cardSwipe.face = null; cardSwipe.dx = 0;
+  }
+  $('list').addEventListener('touchstart', listTouchStart, { passive:true });
+  $('list').addEventListener('touchmove', listTouchMove, { passive:false });
+  $('list').addEventListener('touchend', listTouchEnd, { passive:true });
+  $('list').addEventListener('touchcancel', function(){ clearTimeout(cardSwipe.lpTimer); cardSwipe.tracking = false; listSwipeReset(); }, { passive:true });
 
   // 标签点击
   $('tagList').addEventListener('click', function(e){
