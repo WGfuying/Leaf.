@@ -11,7 +11,8 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="msapplication-tap-highlight" content="no">
 <title>Leaf.</title>
-<link rel="manifest" href="data:application/manifest+json,%7B%22name%22:%22Leaf.%22,%22short_name%22:%22Leaf%22,%22description%22:%22Leaf.%20MEMO%22,%22start_url%22:%22./%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23ffffff%22,%22orientation%22:%22any%22,%22icons%22:%5B%7B%22src%22:%22data:image/svg%2Bxml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20viewBox%3D'0%200%20512%20512'%3E%3Crect%20width%3D'512'%20height%3D'512'%20rx%3D'112'%20fill%3D'%232f9e9e'/%3E%3Ctext%20x%3D'256'%20y%3D'340'%20font-size%3D'280'%20text-anchor%3D'middle'%20fill%3D'%23ffffff'%20font-family%3D'Georgia,serif'%3EL%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22512x512%22,%22type%22:%22image/svg%2Bxml%22,%22purpose%22:%22any%20maskable%22%7D,%7B%22src%22:%22data:image/svg%2Bxml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20viewBox%3D'0%200%20192%20192'%3E%3Crect%20width%3D'192'%20height%3D'192'%20rx%3D'42'%20fill%3D'%232f9e9e'/%3E%3Ctext%20x%3D'96'%20y%3D'130'%20font-size%3D'105'%20text-anchor%3D'middle'%20fill%3D'%23ffffff'%20font-family%3D'Georgia,serif'%3EL%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg%2Bxml%22%7D%5D%7D">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="leaf-logo.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%232f9e9e'/><text x='90' y='120' font-size='95' text-anchor='middle' fill='%23ffffff' font-family='Georgia,serif'>L</text></svg>">
 <style>
   :root{
@@ -26,7 +27,7 @@
   body{
     background:var(--paper); color:var(--ink);
     font-family:-apple-system,"PingFang SC","Helvetica Neue","Microsoft YaHei",system-ui,sans-serif;
-    font-size:16px; line-height:1.7; -webkit-font-smoothing:antialiased;
+    font-size:16px; line-height:1.7; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
     -webkit-text-size-adjust:100%;
     touch-action:pan-x pan-y; overscroll-behavior:none;
   }
@@ -128,7 +129,7 @@
   /* 侧栏打开时隐藏顶部栏（flomo 式） */
   .app-header.hidden{ transform:translateY(-100%); pointer-events:none; opacity:0 }
 
-  .search{ width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:var(--paper-2); color:var(--ink); font-size:14px; outline:none; -webkit-appearance:none }
+  .search{ width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:var(--paper-2); color:var(--ink); font-size:14px; outline:none; -webkit-appearance:none; appearance:none }
   .search:focus{ border-color:var(--cyan-soft); background:var(--paper) }
 
   /* 导航按钮 */
@@ -215,6 +216,11 @@
   .card.tint-del{ background:#fbeaea; }
   .card.tint-pin::before{ content:'置顶'; position:absolute; left:20px; top:50%; transform:translateY(-50%); color:var(--cyan); font-weight:600; font-size:14px; letter-spacing:1px; }
   .card.tint-del::before{ content:'删除'; position:absolute; right:20px; top:50%; transform:translateY(-50%); color:#c0392b; font-weight:600; font-size:14px; letter-spacing:1px; }
+  /* 回收站滑动：右滑彻底删除 / 左滑恢复 */
+  .card.trash.tint-purge{ background:#fbeaea; }
+  .card.trash.tint-restore{ background:var(--cyan-soft); }
+  .card.trash.tint-purge::before{ content:'彻底删除'; position:absolute; right:20px; top:50%; transform:translateY(-50%); color:#c0392b; font-weight:600; font-size:14px; letter-spacing:1px; }
+  .card.trash.tint-restore::before{ content:'恢复'; position:absolute; left:20px; top:50%; transform:translateY(-50%); color:var(--cyan); font-weight:600; font-size:14px; letter-spacing:1px; }
   .card .meta{
     display:flex; justify-content:space-between; align-items:center;
     font-size:11.5px; color:var(--muted); margin-bottom:8px;
@@ -298,7 +304,7 @@
     min-width:34px; height:30px; padding:0 9px; border:1px solid var(--line);
     background:var(--paper); color:var(--ink); border-radius:8px; cursor:pointer;
     font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center;
-    -webkit-appearance:none;
+    -webkit-appearance:none; appearance:none;
   }
   .ed-fmt button:active{ background:var(--paper-2) }
   .ed-fmt button b{ font-weight:700 }
@@ -306,7 +312,7 @@
     display:flex; align-items:center; gap:5px; height:30px; padding:0 11px;
     border:1px solid var(--line); background:var(--paper); color:var(--muted);
     border-radius:8px; cursor:pointer; font-size:12.5px; font-weight:600; letter-spacing:.5px;
-    -webkit-appearance:none; transition:all .15s;
+    -webkit-appearance:none; appearance:none; transition:all .15s;
   }
   .md-toggle svg{ color:var(--muted) }
   .md-toggle.on{ color:var(--cyan); border-color:var(--cyan); background:rgba(47,158,158,0.10) }
@@ -980,9 +986,9 @@ function insertAtCursor(ta, text, selLen){
   var before = v.slice(0, s), sel = v.slice(s, e) || '', after = v.slice(e);
   var insert = text.replace('$SEL', sel);
   ta.value = before + insert + after;
-  var pos = before.length + (selLen!==undefined ? selLen : insert.length);
+  var pos = before.length + insert.length;
   ta.focus();
-  ta.setSelectionRange(before.length + insert.indexOf('$SEL'), before.length + insert.indexOf('$SEL') + (sel || '').length);
+  ta.setSelectionRange(pos, pos);
   ta.dispatchEvent(new InputEvent('input', {bubbles:true}));
 }
 function toggleSelectionWrap(ta, mark){
@@ -1005,8 +1011,8 @@ async function saveCard(){
     if(editingId){ var c = cards.find(function(x){ return x.id===editingId; }); c.content = content; c.tags = tags; c.updated = ts; }
     else { var nc = { id: uid(), content: content, tags: tags, created: ts, updated: ts, pinned:false, deleted:false }; cards.push(nc); }
     var targetId = editingId || cards[cards.length-1].id;
-    var saveCard = cards.find(function(x){ return x.id===targetId; }) || cards[cards.length-1];
-    await dbPut(saveCard);
+    var targetCard = cards.find(function(x){ return x.id===targetId; }) || cards[cards.length-1];
+    await dbPut(targetCard);
     $('editor').classList.remove('open'); $('editorMask').classList.remove('show'); document.body.style.overflow = '';
     editingId = null; dirty = false; await refresh(); toast('已保存');
   }catch(e){
@@ -1165,7 +1171,7 @@ function exportImage(){
     var tags = c.tags.length ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">'+c.tags.map(function(t){ return '<span style="background:#e0f4f4;color:#2f9e9e;padding:2px 10px;border-radius:99px;font-size:11px">#'+escapeHtml(t)+'</span>'; }).join('')+'</div>' : '';
     return '<div style="background:#fff;border-radius:13px;padding:18px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,0.06)"><div style="font-size:11.5px;color:#999;margin-bottom:8px;display:flex;justify-content:space-between">'+meta+'<span>⋯</span></div><div style="font-size:14.5px;line-height:1.75;color:#1f1f1f">'+parseMarkdown(c.content).replace(/<pre/g,'<pre style="background:#f2f8f8;padding:12px;border-radius:8px;overflow-x:auto;font-size:13px"').replace(/<code/g,'<code style="background:#f2f8f8;padding:1px 5px;border-radius:4px;font-size:.9em"')+'</div>'+tags+'</div>';
   };
-  var header = '<div style="text-align:center;margin-bottom:18px"><span style="font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif;font-size:20px;font-weight:700;color:#2f9e9e">leaf.</span><span style="font-size:12px;color:#999;margin-left:8px">MEMO · '+list.length+'</span></div>';
+  var header = '<div style="text-align:center;margin-bottom:18px"><span style="font-family:\'Optima\',\'Palatino Linotype\',\'Palatino\',\'Candara\',\'Songti SC\',Georgia,\'Times New Roman\',serif;font-size:20px;font-weight:700;color:#2f9e9e">leaf.</span><span style="font-size:12px;color:#999;margin-left:8px">MEMO · '+list.length+'</span></div>';
   var footer = '<div style="text-align:center;color:#bbb;font-size:10px;margin-top:16px">由 Leaf 导出</div>';
   var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="'+(single?520:720)+'" height="'+(single?400:900)+'"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml" style="font-family:-apple-system,PingFang SC,Microsoft YaHei,sans-serif;padding:24px;background:#ffffff">'+header+list.map(cardToHtml).join('')+footer+'</div></foreignObject></svg>';
   var url = URL.createObjectURL(new Blob([svg], {type:'image/svg+xml;charset=utf-8'}));
@@ -1193,7 +1199,7 @@ function importJSON(file){
         var c = arr[ii];
         if(!c.id) c.id = uid();
         if(typeof c.content!=='string') c.content='';
-        c.tags = extractTags(content); c.created=c.created||now(); c.updated=c.updated||now();
+        c.tags = extractTags(c.content); c.created=c.created||now(); c.updated=c.updated||now();
         c.pinned=!!c.pinned; c.deleted=false; await dbPut(c);
       }
       await refresh(); toast('已导入 '+arr.length+' 条 MEMO');
@@ -1403,7 +1409,6 @@ function bind(){
     // 关键修复：每次新手势先清掉上一次可能残留的"吞点击"标记，
     // 否则进入回收站后第一次点"恢复/彻底删除"会被误吞（点击无反应）
     cardSwipe.fired = false; cardSwipe.tracking = false;
-    if(view==='trash') return;
     if($('sidebar').classList.contains('open')) return;
     if(e.touches[0].clientX <= 60) return;                 // 左缘留给侧栏
     var t = e.target;
@@ -1415,15 +1420,17 @@ function bind(){
     cardSwipe.startX = e.touches[0].clientX;
     cardSwipe.startY = e.touches[0].clientY;
     cardSwipe.dx = 0; cardSwipe.tracking = true;
-    // 长按=编辑（移动端）：按住不动 450ms 即打开编辑器
-    clearTimeout(cardSwipe.lpTimer);
-    cardSwipe.lpTimer = setTimeout(function(){
-      if(!cardSwipe.tracking) return;
-      cardSwipe.fired = true;            // 吞掉随后的 click，避免又展开
-      cardSwipe.tracking = false;
-      listSwipeReset();
-      openEditor(card.dataset.id);
-    }, 450);
+    // 长按=编辑（仅"全部"视图；回收站卡片不可编辑，故不放长按）
+    if(view !== 'trash'){
+      clearTimeout(cardSwipe.lpTimer);
+      cardSwipe.lpTimer = setTimeout(function(){
+        if(!cardSwipe.tracking) return;
+        cardSwipe.fired = true;            // 吞掉随后的 click，避免又展开
+        cardSwipe.tracking = false;
+        listSwipeReset();
+        openEditor(card.dataset.id);
+      }, 450);
+    }
   }
   function listTouchMove(e){
     if(!cardSwipe.tracking) return;
@@ -1435,8 +1442,13 @@ function bind(){
     cardSwipe.dx = Math.max(-180, Math.min(180, dx));
     cardSwipe.face.classList.add('swiping');
     cardSwipe.face.style.transform = 'translateX('+cardSwipe.dx+'px)';
-    cardSwipe.el.classList.toggle('tint-pin', cardSwipe.dx > 0);
-    cardSwipe.el.classList.toggle('tint-del', cardSwipe.dx < 0);
+    if(view === 'trash'){
+      cardSwipe.el.classList.toggle('tint-purge', cardSwipe.dx > 0);    // 右滑=彻底删除
+      cardSwipe.el.classList.toggle('tint-restore', cardSwipe.dx < 0);  // 左滑=恢复
+    } else {
+      cardSwipe.el.classList.toggle('tint-pin', cardSwipe.dx > 0);
+      cardSwipe.el.classList.toggle('tint-del', cardSwipe.dx < 0);
+    }
   }
   function listTouchEnd(){
     clearTimeout(cardSwipe.lpTimer);
@@ -1449,7 +1461,11 @@ function bind(){
       var id = cardSwipe.el.dataset.id;
       cardSwipe.fired = true;                              // 吞掉随后可能的 click
       listSwipeReset();
-      if(dx > 0) togglePin(id); else delCard(id, false);   // 软删，进回收站可恢复
+      if(view === 'trash'){
+        if(dx > 0) delCard(id, true); else restoreCard(id);  // 右滑=彻底删除，左滑=恢复
+      } else {
+        if(dx > 0) togglePin(id); else delCard(id, false);   // 右滑=置顶，左滑=软删进回收站
+      }
     } else {
       if(Math.abs(dx) > 8) cardSwipe.fired = true;         // 拖动过则吞点击
       listSwipeReset();
@@ -1457,7 +1473,7 @@ function bind(){
   }
   function listSwipeReset(){
     if(cardSwipe.face) cardSwipe.face.style.transform = '';
-    if(cardSwipe.el) cardSwipe.el.classList.remove('tint-pin','tint-del');
+    if(cardSwipe.el) cardSwipe.el.classList.remove('tint-pin','tint-del','tint-purge','tint-restore');
     cardSwipe.el = null; cardSwipe.face = null; cardSwipe.dx = 0;
   }
   $('list').addEventListener('touchstart', listTouchStart, { passive:true });
@@ -1529,14 +1545,8 @@ function closeSidebarMobile(){ if(window.innerWidth<=820){ $('sidebar').classLis
 /* ---------- Service Worker 注册 ---------- */
 function registerSW(){
   if(!('serviceWorker' in navigator)) return;
-  var swCode = [
-    "var CACHE = 'leaf-v1';",
-    "self.addEventListener('install', function(e){ e.waitUntil caches.open(CACHE).then(function(c){ return c.add('./'); }); });",
-    "self.addEventListener('fetch', function(e){ e.respondWith(fetch(e.request).catch(function(){ return caches.match(e.request).then(function(r){ return r || caches.match('./'); }); })); });"
-  ].join('\n');
-  var blob = new Blob([swCode], {type:'application/javascript'});
-  var swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl, {scope:'./'}).then(function(){
+  if(!location.protocol || location.protocol === 'file:'){ console.log('[Leaf] SW skipped (file:// 不支持离线缓存)'); return; }
+  navigator.serviceWorker.register('./sw.js', {scope:'./'}).then(function(){
     console.log('[Leaf] SW registered');
   }).catch(function(err){
     console.log('[Leaf] SW skipped:', err.message);
