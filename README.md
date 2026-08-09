@@ -1,7 +1,3 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="240" viewBox="0 0 640 240" role="img" aria-label="Leaf.">
-  <text x="12" y="190" font-family="'Optima','Palatino Linotype',Palatino,Candara,'Songti SC',Georgia,'Times New Roman',serif" font-size="180" font-weight="400" letter-spacing="-4" fill="#1a1a1a">leaf</text>
-  <circle cx="588" cy="172" r="22" fill="#2f9e9e"/>
-</svg>
 
 
 
@@ -86,10 +82,6 @@ Leaf.不是来替代它们的。它是你在用完它们之后，仍想坐下来
 
 ---
 
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="240" viewBox="0 0 640 240" role="img" aria-label="Leaf.">
-  <text x="12" y="190" font-family="'Optima','Palatino Linotype',Palatino,Candara,'Songti SC',Georgia,'Times New Roman',serif" font-size="180" font-weight="400" letter-spacing="-4" fill="#1a1a1a">leaf</text>
-  <circle cx="588" cy="172" r="22" fill="#2f9e9e"/>
-</svg>
 
 
 
