@@ -1,5 +1,6 @@
 ![5577f8e1-a392-4c6d-a206-f8c016325193-image.png](5577f8e1-a392-4c6d-a206-f8c016325193-image.png)
 
+---
 
 *「一叶落地，一念生根。」*
 
@@ -86,6 +87,7 @@ Leaf.不是来替代它们的。它是你在用完它们之后，仍想坐下来
 
 ![5577f8e1-a392-4c6d-a206-f8c016325193-image.png](5577f8e1-a392-4c6d-a206-f8c016325193-image.png)
 
+---
 
 *"A leaf falls. A thought takes root."*
 
