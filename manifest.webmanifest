@@ -1,25 +1,19 @@
 {
   "name": "Leaf.",
   "short_name": "Leaf",
-  "description": "Leaf. MEMO",
+  "description": "Leaf. — 无 AI 的卡片式 Markdown 思维工具",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#f5f3ee",
+  "theme_color": "#2f9e9e",
   "orientation": "any",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20512%20512'%3E%3Crect%20width='512'%20height='512'%20rx='112'%20fill='%232f9e9e'/%3E%3Ctext%20x='256'%20y='340'%20font-size='280'%20text-anchor='middle'%20fill='%23ffffff'%20font-family='Georgia,serif'%3EL%3C/text%3E%3C/svg%3E",
+      "src": "leaf-icon.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
-    },
-    {
-      "src": "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20192%20192'%3E%3Crect%20width='192'%20height='192'%20rx='42'%20fill='%232f9e9e'/%3E%3Ctext%20x='96'%20y='130'%20font-size='105'%20text-anchor='middle'%20fill='%23ffffff'%20font-family='Georgia,serif'%3EL%3C/text%3E%3C/svg%3E",
-      "sizes": "192x192",
-      "type": "image/svg+xml"
-
     }
   ]
 }
