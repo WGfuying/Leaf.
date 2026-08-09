@@ -91,7 +91,7 @@ Leaf.不是来替代它们的。它是你在用完它们之后，仍想坐下来
 ---
 
 
-*"A leaf falls. A thought takes root."*
+*"A falling leaf, a growing thought."*
 
 In an era when everyone builds platforms, Leaf. chooses to be a tool.
 
