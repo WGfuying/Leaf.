@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Leaf 探针</title><style>body{font-family:-apple-system,sans-serif;padding:20px;background:#f5f3ee;color:#1f1f1f}</style></head><body>
+<h1>Leaf 探针</h1>
+<div id="r"></div>
+<script>
+var out=document.getElementById('r');
+function log(m){out.innerHTML+=m+'<br>';}
+log('✅ HTML 解析成功');
+log('UA: '+navigator.userAgent);
+log('protocol: '+location.protocol);
+log('host: '+location.host);
+try{if('serviceWorker' in navigator)log('⚠️ SW 可用（可能干扰）');else log('✅ SW 不可用');}catch(e){log('❌ SW 检测报错: '+e);}
+try{if(window.indexedDB)log('✅ IndexedDB 可用');else log('⚠️ IndexedDB 不可用');}catch(e){log('❌ IndexedDB 报错: '+e);}
+log('--- JS 全部执行完毕 ✅');
+</script></body></html>
