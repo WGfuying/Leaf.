@@ -12,7 +12,7 @@
 
 它不想锁住你，只想接住那些你还没来得及写下的念头。
 
-Web 优先，云端同步，老设备友好。纯文本与 Markdown 为骨，不绑架你的数据，也不强迫你学习复杂的结构。
+Web App + PWA 优先，老设备友好。纯文本与 Markdown 为骨，不绑架你的数据，也不强迫你学习复杂的结构。
 
 
 ---
@@ -146,7 +146,7 @@ Leaf. isn’t here to replace them. It’s the place you open when you’ve used
 
 - Plain text + Markdown : What you write is what it stores. No extra layers.
 
-- Web App + PWA-first：We don't want to lock you into any ecosystem. We want to build a Leaf that everyone can uses Leaf.
+- Web App + PWA-first：We don't want to lock you into any ecosystem. We want to build a Leaf. that everyone can uses.
 
 - Lightweight : No installation, no updates, no background processes.
 
