@@ -51,7 +51,7 @@ Leaf.不是来替代它们的。它是你在用完它们之后，仍想坐下来
 | **无 AI** | 不替你思考，不替你总结，不替你写。只存储你写下来的。 |
 | **零付费** | 功能全开放，不设付费墙。你不需要为“导出”或“同步”付钱。 |
 | **开源** | 你可以 fork，可以修改，可以把它变成你自己的版本。 |
-| **Web + 云端优先** | 老设备也能打开，不挑生态，不占存储。 |
+| **Web App + PWA 优先** | 老设备也能打开，不挑生态。 |
 | **Less is more** | 不做平台，只做工具。即用即走。 |
 ---
 
@@ -59,7 +59,7 @@ Leaf.不是来替代它们的。它是你在用完它们之后，仍想坐下来
 
 - 纯文本 + Markdown：你写什么，它就存什么。不额外加层。
 
-- 云端同步：登录即可访问，不依赖单台设备。
+- Web App + PWA 优先：不选择固定在某个生态内，要做让所有人都能用的一片叶子。
 
 - 轻量：不安装，不更新，不后台运行。
 
@@ -137,7 +137,7 @@ Leaf. isn’t here to replace them. It’s the place you open when you’ve used
 | **No AI** | It doesn’t think for you, summarize for you, or write for you. It only stores what you write. |
 | **No paywall** | All features are open. You don’t pay for export, sync, or anything else. |
 | **Open source** | Fork it. Modify it. Make it your own version. |
-| **Web + cloud-first** | Old devices can open it. It doesn’t lock you into any ecosystem or take up your storage. |
+| **Web App + PWA-first** | Old devices can open it, and it doesn’t lock you into any ecosystem. |
 | **Less is more** | Not a platform. Just a tool. Use it and leave it. |
 
 ---
@@ -146,7 +146,7 @@ Leaf. isn’t here to replace them. It’s the place you open when you’ve used
 
 - Plain text + Markdown : What you write is what it stores. No extra layers.
 
-- Cloud sync : Log in and access your notes from anywhere. No dependency on a single device.
+- Web App + PWA-first：We don't want to lock you into any ecosystem, We want to build up everyone can use Leaf.
 
 - Lightweight : No installation, no updates, no background processes.
 
