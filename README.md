@@ -99,7 +99,7 @@ No AI. No interruptions. No paywalls. Open source.
 
 It doesn’t try to keep you — it only tries to catch what you’re about to lose.
 
-Web-first, cloud-sync, old-device friendly. Plain text and Markdown at its core. No vendor lock-in, no forced structure.
+Web App + PWA-first,, old-device friendly. Plain text and Markdown at its core. No vendor lock-in, no forced structure.
 
 
 ---
