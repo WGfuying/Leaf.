@@ -146,8 +146,7 @@ Leaf. isn’t here to replace them. It’s the place you open when you’ve used
 
 - Plain text + Markdown : What you write is what it stores. No extra layers.
 
-- Web App + PWA-first：We don't want to lock you into any ecosystem, We want to build up everyone can use Leaf.
-
+- Web App + PWA-first：We don't want to lock you into any ecosystem. We want to build a Leaf that everyone can uses Leaf.
 - Lightweight : No installation, no updates, no background processes.
 
 ---
