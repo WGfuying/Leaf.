@@ -1,0 +1,82 @@
+# Hmm...
+- **"In an age when everyone is building platforms and ecosystems — what are we building?"**
+- A guiding question. A small lighthouse, so we never lose our way, never forget the first heartbeat that started this.
+  - Make something with **no AI and zero noise**, so it never feels like a chore, never becomes something you'd **find annoying and close forever**.
+  - Make something **zero-paywall and open-source**. We won't ask you to pay, nor let you lie awake fearing hidden charges, causing **users to distrust** our product.
+  - Let anyone with a spark in their chest **fork my project anytime and grow it further**, because most of what I know, the open-source community taught me.
+  - Make something **"Web App + PWA first"**, so even tired old devices can run it like a breeze, keeping **one same quiet experience across four shores** (desktop, pad, phone, and web), so using it feels **safe, easy, and unbothered**.
+  - Hold to **"Less is more."** Build a **tool**, not a **platform**. **Use it, then go live your life.**
+- **What are our kindred predecessors doing?**
+- *Walk the old paths, keep the gold, sweep away the dust, and let history hold the mirror.*
+- ***Mubu***
+- *Minimal input. Structured thinking. Visual clarity.*
+- **Worth learning:**
+  - One experience across **four shores** (desktop, pad, phone, web)—perfectly unified, **easy to pick up, no walking in circles**.
+  - Markdown support, bringing **minimal** yet **swift** input.
+  - Outline notes as the backbone, training **structured thinking**, letting you think clearer and see all the way through.
+- **Not worth learning:**
+  - Besides the leading **outline notes**, Mubu also grows a **mind map** mode. Efficient, truly—but we won't chase "**All in one**." We hold to "**Less is more**."
+  - A premium tier (subscription). Although **free** users won't suffer, features are still **restricted**.
+- ***Bear***
+- *Beautiful design, gentle to learn—a pity it lives locked inside Apple's ecosystem.*
+- **Worth learning:**
+  - **Plain text & Markdown first**, plus its hidden syntax for a **pure layout experience**, never **interrupted** by symbols.
+  - A **clear** stance on privacy, letting users know **notes belong to themselves**, no need to worry about being **spied on**, **secretly uploaded to strangers' servers**, or **data sold**, letting users **grow trust** in the product.
+  - A **zero-noise** focus mode, letting the user ***Focus on writing*** the moment they open it, focusing on recording, undisturbed by other elements.
+  - **Lightweight** tag organization, letting users **flexibly sort cards**, rather than getting **trapped** in the folder labyrinths of older tools and getting **lost**.
+  - Open, **plain-text formats**, letting users' notes **migrate anytime**, without being **locked inside a platform**.
+- **Not worth learning:**
+  - The **Bear Pro subscription** makes basics—sync, themes, encryption, export—require **payment**, causing users with **tighter budgets** to feel **distrustful**.
+  - Locked in Apple's **"walled garden"**, the product only runs on Apple devices, cloud sync **relies on iCloud**, taking notes away from local hands, causing **huge trouble** for non-Apple users wanting to jump in. A **web version** is in beta, but once officially released, it **still requires payment** to use.
+  - Non-members have **restricted features**. Free users can write, but upper-layer features like sync, themes, export are **still restricted**. Free users **won't do poorly**, but they **can't use it fully**.
+  - Wiki-links / backlinks, pursuing personal Wiki and knowledge management—the scope **creeps toward platformization**, **betraying** the **"Less is More"** philosophy.
+  - Over 30 themes and custom icons, pursuing a **cosmetic paywall**. It does **focus on recording**, but it's also **piling on makeup**.
+- ***flomo (Floating Ink)***
+- *Card notes. Minimal capture for shards of inspiration. Less is more.*
+- **Worth learning:**
+  - Card notes, letting you catch your **shards of inspiration anytime, anywhere**.
+  - **"Less is more"**, letting the user focus on the task the moment they open it, **focusing** on recording, undisturbed by **other content**.
+  - **Turning flomo into a Weibo or Twitter you keep for yourself, jotting down whatever you like.** It truly earns its title—a "stream of recorded thoughts," a "thinking tool."
+- **Not worth learning:**
+  - No Markdown support. Its core is **card notes + minimal capture**, but for some groups (including me), it feels a bit **not quite fitting the hand**.
+  - Membership and AI features. We believe some need them, but we don't want to build a product that makes **users distrustful**.
+- **Why "Web App + PWA first"?**
+- *Say the creed out loud, so we never drift from the first heart.*
+- Choosing **"Web App + PWA first"** is to take care of friends on old devices, achieving the goal of **not restricting the ecosystem**. Of course, this doesn't mean we'll rule out the possibility of **developing a standalone App**.
+- **Our stance on AI**
+- *Saying it plainly: why we're making Leaf. — an AI-free "thinking tool," purely for recording and looking back.*
+- We are **not blind to the fact that AI is the current trend**, and we **admit AI is truly brilliant in some aspects**. But the market already overflows with successful, good products that folded AI in, like flomo, Notion, etc. **We don't believe the market needs us to come and add AI too.**
+- Then **what are we doing**?
+  - Let's first sit with a question: **have you noticed you seem to love thinking for yourself a little less each day?**
+  - Picture this: your boss sends you a long, long PPT. What do you choose to do?
+  - Is it **one click, toss it to AI to summarize, and maybe add, "and make it something I can actually understand"?**
+  - That's where we all are now: **more and more of us are using AI with practiced hands.**
+  - But the catch is, the way we use it so smoothly is **outsourcing our brains, letting AI become the tool of thinking, while our brains only verify the deliverables. This makes us lazier and lazier.**
+  - Just like this memo I left in flomo:
+    ![image-1](https://api2.mubu.com/v3/document_image/71d3964c-a29e-4462-b43b-40d505c13866.jpeg)
+  - Yes, **precisely because this is the AI age, each of our own thoughts matters more than ever.**
+  - **Because AI has read every book in the world, but it lacks the tiny context that is only yours.** That is exactly why we chose to build an AI-free "thinking tool."
+  - Of course, I'm not some hardcore AI-hater. This whole product is being built using WorkBuddy's project features.
+  - **I just don't want AI** ***inside*** **this product. I just feel it's a product focused on letting you record and look back—it doesn't need AI added inside.**
+  - Besides, as a student, I don't have that much money to build servers and such for you all. Please forgive me.
+- **Why Markdown?**
+- *Why Leaf. speaks Markdown, and the creed behind it.*
+- We know some might raise an eyebrow at us adding Markdown inside Leaf., thinking it doesn't count as less is more;
+- But our creed is: on the premise of keeping "less is more," to make it convenient for every single friend who uses our product.
+- As one of the most widely spoken formats on the internet right now, Markdown is very convenient. Just a few symbols, in a compatible editor or viewer, can process the document into bold, italic, quote, etc.
+- And we will provide a switch, just like Mubu. Friends who don't need Markdown can choose to turn it off. The specific location of the switch will be announced after the product is finished...
+- p.s.
+- I'm only at the Alpha version right now. It's basically unusable... QAQ
+- **Last choice: open source**
+- *Looks like burning our own bridge. Really, it's watering the whole ecosystem.*
+- Choosing open source is actually **wanting to give back to the open-source community**.
+- Because **although I've used many projects born in the open-source community, or that chose to open source—like F-Droid, DeepSeek, Bitwarden—I have never made a substantial contribution to the community**. I just use their products and draw inspiration...
+- **Without them, perhaps there is no me today**. Therefore, I decided that after the entire development of Leaf. is finished, I will open-source it to GitHub and Gitee.
+- And I welcome all people of insight in advance: **after I open-source this project, feel free to fork it and make it better!** That is also my small token of gratitude to the open-source community.
+- Alright, this About is so long, I don't know if you'll make it to the end? If you have any thoughts, welcome to point them out in the comments, I'll be waiting anytime!
+- **Leaf.'s Slogan**
+- *Eight characters that carry our whole attitude toward this product.*
+- *"A falling leaf, a growing thought."*
+- 「一叶落地，一念生根。」
+- 𝓫𝔂 𝓶.𝔁. 🌕
+- *微光浮影。*
