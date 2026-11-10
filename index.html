@@ -2246,7 +2246,16 @@ function anchorFor(trigger){
 function applyAnchor(m, trigger){
   // 仅 .modal-mask 走方向跟随；yiyan 等居中彩蛋不受 anchor-* 影响
   if(!m.classList.contains('modal-mask')) return;
-  var a = anchorFor(trigger);
+  var a;
+  // 嵌套触发：若触发元素位于某个「已打开面板」内部（如设置面板里的「关于 Leaf」），
+  // 沿用父面板的锚点，不再按屏幕坐标重算。否则在手机上父面板几乎占满屏宽，
+  // 内部按钮会落入中间竖带被判成上下，导致同一入口桌面从左、手机从底的不一致。
+  var host = (trigger && trigger.closest) ? trigger.closest('.modal-mask.open') : null;
+  if(host && host !== m && host.dataset.anchor){
+    a = host.dataset.anchor;
+  } else {
+    a = anchorFor(trigger);
+  }
   m.classList.remove('anchor-left','anchor-right','anchor-top','anchor-bottom');
   m.classList.add('anchor-' + a);
   m.dataset.anchor = a;
