@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#f5f3ee">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Leaf">
@@ -16,26 +16,65 @@
 <link rel="apple-touch-icon" href="leaf-icon.png">
 <style>
   :root{
-    --paper:#ffffff; --ink:#1f1f1f; --cyan:#2f9e9e; --cyan-soft:#a7dbdb;
-    --line:rgba(31,31,31,0.10); --muted:#8a9090; --paper-2:#f2f8f8;
-    --tag-bg:rgba(47,158,158,0.09); --tag-text:#2f9e9e;
-    --card-shadow:0 1px 6px rgba(0,0,0,0.06); --card-radius:13px;
+    /* 配色：暖米纸底 + 保留青色（作者 2026-11-09 拍板）；表面随高度逐级提亮 */
+    --paper:#f5f3ee; --surface:#fcfaf6; --surface-2:#fffdfa;
+    --ink:#1f1f1f; --cyan:#2f9e9e; --cyan-soft:#a7dbdb;
+    --line:rgba(48,44,36,0.12); --muted:#8b887f; --paper-2:#ebe7dd;
+    --tag-bg:rgba(47,158,158,0.10); --tag-text:#2f9e9e;
+    /* 纸张质感（作者 2026-11-09 21:16 改）：尽量避免圆角，只留 1–3px 纸边倒角 */
+    --r-xs:1px; --r-sm:2px; --r-md:2px; --r-lg:2px; --r-xl:3px; --r-pill:2px;
+    --card-radius:var(--r-lg);
+    /* 纸张层次（本轮）：一张纸浮在底层纸之上，两者之间留一道「空隙」。
+       光从上方来，只投下【一个】连续、边缘柔和的阴影：单层 box-shadow，
+       offset=空隙高度，blur=半影扩散，负 spread 收边。层级越高 = 空隙越大、
+       投影越散越淡。禁止逗号叠多层、禁止 0 Xpx 0 硬边伪造「下层纸」，
+       FAB / 侧栏 / 设置页均只引用这一组单层值。 */
+    --elev-0:none;
+    --elev-1:0 2px 6px -2px rgba(58,52,40,0.14);
+    --elev-2:0 5px 12px -3px rgba(58,52,40,0.16);
+    --elev-3:0 10px 22px -6px rgba(58,52,40,0.18);
+    --elev-4:0 16px 34px -10px rgba(58,52,40,0.20);
+    --card-shadow:var(--elev-1);
+    /* 非线性动效：standard 状态 / emphasized 入场 / 轻微回弹（作者要求减弱幅度） */
+    --ease-std:cubic-bezier(.2,0,0,1);
+    --ease-emp:cubic-bezier(.2,0,0,1);
+    --ease-out:cubic-bezier(.3,0,.8,.15);
+    --ease-spring:cubic-bezier(.22,1.06,.36,1);   /* 过冲由 1.4 降到 1.06，不再过度 */
+    --ease-sheet:cubic-bezier(.16,.84,.28,1);      /* 底部弹层：快起慢落、无过冲 */
+    --d1:.13s; --d2:.24s; --d3:.38s; --d4:.52s;
     --header-h:48px;
+    --dock-h:190px;   /* 由 syncDockPadding() 按展开面板实际高度动态更新 */
+    --dock-bg:var(--surface-2); --dock-blur-bg:var(--surface-2);  /* 不透明纸片，不再高斯模糊 */
+    --dock-shadow:var(--elev-3);
   }
   /* ---------- 暗色配色：保持文青暖调（墨绿点缀），深而不刺眼 ---------- */
   [data-theme="dark"]{
-    --paper:#16191c; --ink:#e7ebec; --cyan:#3fbdbd; --cyan-soft:#2a6b6b;
+    --paper:#16191c; --surface:#1e2227; --surface-2:#252b31; --ink:#e7ebec; --cyan:#3fbdbd; --cyan-soft:#2a6b6b;
     --line:rgba(255,255,255,0.10); --muted:#8f989d; --paper-2:#1e242a;
     --tag-bg:rgba(63,189,189,0.14); --tag-text:#5fd0d0;
-    --card-shadow:0 1px 6px rgba(0,0,0,0.40);
+    --elev-0:none;
+    --elev-1:0 2px 6px -2px rgba(0,0,0,0.44);
+    --elev-2:0 5px 12px -3px rgba(0,0,0,0.50);
+    --elev-3:0 10px 22px -6px rgba(0,0,0,0.56);
+    --elev-4:0 16px 34px -10px rgba(0,0,0,0.62);
+    --card-shadow:var(--elev-1);
+    --dock-bg:var(--surface-2); --dock-blur-bg:var(--surface-2);
+    --dock-shadow:var(--elev-3);
   }
   /* 跟随系统：未手动指定浅色时，系统暗色自动生效 */
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --paper:#16191c; --ink:#e7ebec; --cyan:#3fbdbd; --cyan-soft:#2a6b6b;
-      --line:rgba(255,255,255,0.10); --muted:#8f989d; --paper-2:#1e242a;
-      --tag-bg:rgba(63,189,189,0.14); --tag-text:#5fd0d0;
-      --card-shadow:0 1px 6px rgba(0,0,0,0.40);
+      --paper:#16191c; --surface:#1e2227; --surface-2:#252b31; --ink:#e7ebec; --cyan:#3fbdbd; --cyan-soft:#2a6b6b;
+        --line:rgba(255,255,255,0.10); --muted:#8f989d; --paper-2:#1e242a;
+        --tag-bg:rgba(63,189,189,0.14); --tag-text:#5fd0d0;
+        --elev-0:none;
+        --elev-1:0 2px 6px -2px rgba(0,0,0,0.44);
+        --elev-2:0 5px 12px -3px rgba(0,0,0,0.50);
+        --elev-3:0 10px 22px -6px rgba(0,0,0,0.56);
+        --elev-4:0 16px 34px -10px rgba(0,0,0,0.62);
+        --card-shadow:var(--elev-1);
+        --dock-bg:var(--surface-2); --dock-blur-bg:var(--surface-2);
+        --dock-shadow:var(--elev-3);
     }
   }
   /* 暗色下名言遮罩由白改深，避免刺眼 */
@@ -52,8 +91,19 @@
   .serif{font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif}
   ::selection{background:rgba(47,158,158,0.22)}
 
-  /* z-index 层级表：
-     sidebar 60 / sidebarMask 55 / appHeader 70 / menuToggle 90 / fab 80 / editor 200 / modal 210 / yiyan 230 / toast 240 */
+  /* ===== MD1 窗口 / 层级规格表（唯一权威，改层级必须同步改这里） =====
+     | 窗口          | 尺寸/布局                          | z-index | 层级语义        |
+     | 内容流 stream | flex:1，padding 限宽               | 0       | 底层纸          |
+     | 卡片 card     | 流内块，max-width 随断点            | 0       | 贴在底层纸上    |
+     | 侧栏 sidebar  | 桌面 220/268px 常驻；手机 78%/≤300px 抽屉 | 60/100 | nav drawer 16dp |
+     | 顶栏 header   | 高 48px                            | 70      | app bar         |
+     | FAB           | 56×56 圆形，底部居中               | 80      | FAB 6dp         |
+     | 输入面板 dock | 手机 left/right 12px，贴底          | 60      | 临时纸片        |
+     | 编辑器(停用)  | 90vh 上滑                          | 200/195 | —               |
+     | 弹窗 mask     | 全屏 scrim，面板靠右               | 210     | dialog 24dp     |
+     | 一言彩蛋      | 全屏模糊                           | 230     | 顶层            |
+     | toast         | 底部居中，自动消失                  | 240     | snackbar        |
+     所有弹窗共用 .open / .closing 两个状态类与同一组动效 token。 */
   .app{display:flex; height:100vh; height:100dvh; position:relative}
 
   /* ===== 图标系统 ===== */
@@ -71,7 +121,7 @@
   .header-hamburger{
     width:36px; height:36px; padding:0; border:none; background:transparent;
     cursor:pointer; display:flex; align-items:center; justify-content:center;
-    border-radius:8px; color:var(--ink); transition:background .15s;
+    border-radius:var(--r-sm); color:var(--ink); transition:background .15s;
     flex-shrink:0;
   }
   .header-hamburger:active{ background:var(--paper-2) }
@@ -87,7 +137,7 @@
   .header-search{
     width:36px; height:36px; padding:0; border:none; background:transparent;
     cursor:pointer; display:flex; align-items:center; justify-content:center;
-    border-radius:8px; color:var(--muted); transition:color .15s, background .15s;
+    border-radius:var(--r-sm); color:var(--muted); transition:color .15s, background .15s;
     flex-shrink:0;
   }
   .header-search:active{ color:var(--ink); background:var(--paper-2) }
@@ -118,7 +168,7 @@
   /* 设置按钮：侧栏 header 右上角 */
   .sidebar-settings-btn{
     display:flex; align-items:center; gap:5px; padding:6px 10px;
-    border-radius:8px; cursor:pointer; color:var(--muted);
+    border-radius:var(--r-sm); cursor:pointer; color:var(--muted);
     transition:background .12s, color .12s; font-size:13px;
     flex-shrink:0; white-space:nowrap;
   }
@@ -132,7 +182,7 @@
   }
   .sidebar-footer-item{
     display:flex; align-items:center; gap:7px; padding:8px 10px;
-    border-radius:8px; cursor:pointer; color:var(--muted); font-size:13px;
+    border-radius:var(--r-sm); cursor:pointer; color:var(--muted); font-size:13px;
     transition:background .12s, color .12s;
     -webkit-tap-highlight-color: transparent;
   }
@@ -147,12 +197,12 @@
   /* 侧栏打开时隐藏顶部栏（flomo 式） */
   .app-header.hidden{ transform:translateY(-100%); pointer-events:none; opacity:0 }
 
-  .search{ width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:var(--paper-2); color:var(--ink); font-size:14px; outline:none; -webkit-appearance:none; appearance:none }
+  .search{ width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:var(--r-md); background:var(--paper-2); color:var(--ink); font-size:14px; outline:none; -webkit-appearance:none; appearance:none }
   .search:focus{ border-color:var(--cyan-soft); background:var(--paper) }
 
   /* 导航按钮 */
   .nav-btn{
-    text-align:left; padding:9px 12px; border:none; border-radius:10px;
+    text-align:left; padding:9px 12px; border:none; border-radius:var(--r-md);
     background:transparent; color:var(--ink); font-size:14px; cursor:pointer;
     display:flex; align-items:center; gap:10px; transition:background .15s;
   }
@@ -160,7 +210,7 @@
 
   /* 全部 MEMO 主按钮 —— active 时高亮 */
   .nav-primary{
-    background:var(--cyan); color:var(--paper); border-radius:10px;
+    background:var(--cyan); color:var(--paper); border-radius:var(--r-md);
     padding:10px 14px; font-size:14.5px; font-weight:600;
     display:flex; align-items:center; gap:10px; cursor:pointer;
     border:none; width:100%; justify-content:flex-start; transition:opacity .15s;
@@ -188,20 +238,20 @@
     letter-spacing:.5px;
   }
   .tag-sort-label{ font-size:11px; color:var(--muted); opacity:.7 }
-  .tag-sort-group{ display:flex; align-items:center; gap:4px; cursor:pointer; padding:2px 4px; border-radius:6px; -webkit-tap-highlight-color:transparent; transition:background .12s }
+  .tag-sort-group{ display:flex; align-items:center; gap:4px; cursor:pointer; padding:2px 4px; border-radius:var(--r-xs); -webkit-tap-highlight-color:transparent; transition:background .12s }
   .tag-sort-group:active{ background:var(--paper-2) }
   .tag-sort-group.active .tag-sort-label{ color:var(--cyan); opacity:1 }
   .tag-sort-group.active .icon svg{ stroke:var(--cyan) }
   /* 排序模式：标签项右侧显示上下箭头 */
   .tag-item .tag-move{ display:none; margin-left:6px }
   .sort-mode .tag-item .tag-move{ display:flex; align-items:center; gap:2px }
-  .tag-move button{ border:none; background:transparent; color:var(--muted); cursor:pointer; padding:3px 5px; border-radius:5px; font-size:13px; line-height:1; -webkit-tap-highlight-color:transparent }
+  .tag-move button{ border:none; background:transparent; color:var(--muted); cursor:pointer; padding:3px 5px; border-radius:var(--r-xs); font-size:13px; line-height:1; -webkit-tap-highlight-color:transparent }
   .tag-move button:active{ background:var(--paper-2); color:var(--ink) }
   .sort-mode .tag-item{ cursor:default }
   .tag-list{ list-style:none; padding:0; margin:0 }
   .tag-item{
     display:flex; align-items:center; gap:10px; padding:8px 10px;
-    border-radius:8px; cursor:pointer; font-size:14px; color:var(--ink);
+    border-radius:var(--r-sm); cursor:pointer; font-size:14px; color:var(--ink);
     transition:background .12s;
   }
   .tag-item:active{ background:rgba(47,158,158,0.06) }
@@ -217,48 +267,50 @@
   .stream{ flex:1; overflow-y:auto; padding:calc(var(--header-h) + 12px) clamp(14px,4vw,48px) 24px; background:var(--paper); -webkit-overflow-scrolling:touch }
 
   .empty{ text-align:center; color:var(--muted); margin-top:18vh; font-size:15px; line-height:2 }
-  .empty .big{ font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; font-size:20px; color:var(--cyan-soft) }
+  .empty .big{ font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; font-size:20px; color:var(--ink) }
 
   /* ---------- 卡片 ---------- */
   .card{
-    background:var(--paper); border-radius:var(--card-radius);
-    box-shadow:var(--card-shadow); margin-bottom:12px;
-    cursor:pointer; transition:box-shadow .2s, transform .15s; position:relative;
-    overflow:hidden; border:1px solid rgba(0,0,0,.04);
+    background:var(--surface); border-radius:var(--card-radius);
+    margin-bottom:14px; cursor:pointer; position:relative;
+    overflow:hidden; border:1px solid var(--line);
+    box-shadow:var(--card-shadow);
   }
-  .card:active{ transform:scale(.99) }
   .card.pinned{ border-left:3px solid var(--cyan) }
-  .card-face{ background:var(--paper); border-radius:var(--card-radius); padding:16px 18px; transition:transform .25s cubic-bezier(.4,0,.2,1); will-change:transform; }
+  .card-face{ background:var(--surface); border-radius:var(--card-radius); padding:16px 18px; transition:transform .2s ease; will-change:transform; }
   .card-face.swiping{ transition:none; }
   .card.tint-pin{ background:var(--cyan-soft); }
   .card.tint-del{ background:#fbeaea; }
-  .card.tint-pin::before{ content:'置顶'; position:absolute; left:20px; top:50%; transform:translateY(-50%); color:var(--cyan); font-weight:600; font-size:14px; letter-spacing:1px; }
-  .card.tint-del::before{ content:'删除'; position:absolute; right:20px; top:50%; transform:translateY(-50%); color:#c0392b; font-weight:600; font-size:14px; letter-spacing:1px; }
-  /* 回收站滑动：右滑彻底删除 / 左滑恢复 */
+  /* 提示文案必须放在滑动后「露出的那一侧」：右滑 face 右移露左侧 → 文案在 left；
+     左滑 face 左移露右侧 → 文案在 right。写反就会被 card-face 完全盖住（回收站旧 bug）。
+     z-index:1 保证伪元素不被 card-face 的 will-change/transform 层叠上下文压住。 */
+  .card.tint-pin::before{ content:'置顶'; position:absolute; left:20px; top:50%; transform:translateY(-50%); z-index:1; color:var(--cyan); font-weight:600; font-size:14px; letter-spacing:1px; }
+  .card.tint-del::before{ content:'删除'; position:absolute; right:20px; top:50%; transform:translateY(-50%); z-index:1; color:#c0392b; font-weight:600; font-size:14px; letter-spacing:1px; }
+  /* 回收站滑动：右滑=删除（提示在露出的左侧）/ 左滑=恢复（提示在露出的右侧） */
   .card.trash.tint-purge{ background:#fbeaea; }
   .card.trash.tint-restore{ background:var(--cyan-soft); }
-  .card.trash.tint-purge::before{ content:'彻底删除'; position:absolute; right:20px; top:50%; transform:translateY(-50%); color:#c0392b; font-weight:600; font-size:14px; letter-spacing:1px; }
-  .card.trash.tint-restore::before{ content:'恢复'; position:absolute; left:20px; top:50%; transform:translateY(-50%); color:var(--cyan); font-weight:600; font-size:14px; letter-spacing:1px; }
+  .card.trash.tint-purge::before{ content:'删除'; position:absolute; left:20px; top:50%; transform:translateY(-50%); z-index:1; color:#c0392b; font-weight:600; font-size:14px; letter-spacing:1px; }
+  .card.trash.tint-restore::before{ content:'恢复'; position:absolute; right:20px; top:50%; transform:translateY(-50%); z-index:1; color:var(--cyan); font-weight:600; font-size:14px; letter-spacing:1px; }
   .card .meta{
     display:flex; justify-content:space-between; align-items:center;
     font-size:11.5px; color:var(--muted); margin-bottom:8px;
   }
   .card .meta-time{ }
   .card .meta-menu{
-    opacity:0; transition:opacity .15s; cursor:pointer; padding:2px 4px; border-radius:4px;
+    opacity:0; transition:opacity .15s; cursor:pointer; padding:2px 4px; border-radius:var(--r-xs);
     color:var(--muted); border:0; background:none; font:inherit; display:inline-flex; align-items:center;
   }
   .card:hover .meta-menu, .card.show-menu .meta-menu{ opacity:1 }
   .card .meta-menu:active{ color:var(--ink); background:var(--paper-2) }
   .card .tags{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px }
   .card .tags .tag-pill{
-    font-size:12px; padding:2px 10px; border-radius:999px;
+    font-size:12px; padding:2px 10px; border-radius:var(--r-pill);
     background:var(--tag-bg); color:var(--tag-text); line-height:1.6;
   }
   .card .body{ color:var(--ink); max-height:220px; overflow:hidden; position:relative; font-size:14.5px; line-height:1.75 }
   .card .body::after{
     content:""; position:absolute; left:0; right:0; bottom:0;
-    height:40px; background:linear-gradient(transparent, var(--paper));
+    height:40px; background:linear-gradient(transparent, var(--surface));
     pointer-events:none;
   }
   .card .body.truncated::after{ content:'' }
@@ -276,20 +328,26 @@
   .card.trash .acts button:first-child{ color:var(--cyan); font-weight:600 }  /* 恢复=青色 CTA */
   .card.trash .acts button:last-child{ color:#c0564f }   /* 彻底删除=警示红 */
 
-  /* ---------- FAB 浮动加号按钮（flomo 式） ---------- */
+  /* ---------- FAB（作者 2026-11-09 21:16 拍板复活，替换手机端常驻输入框） ----------
+     位置：屏幕底部水平居中 = MD2 center-docked FAB 变体，左右手拇指对称可达。
+     用 left:50% + 负 margin 居中，transform 完全留给动效，不与居中互相覆盖。 */
   .fab{
-    position:fixed; right:20px; bottom:24px; z-index:80;
-    width:56px; height:56px; border-radius:50%;
+    position:fixed; left:50%; margin-left:-28px;
+    bottom:calc(24px + env(safe-area-inset-bottom, 0px)); z-index:80;
+    width:56px; height:56px; border-radius:50%;   /* 圆形是 FAB 的规范本体，唯一保留的圆 */
     background:var(--cyan); color:#fff; border:none;
     cursor:pointer; display:flex; align-items:center; justify-content:center;
-    box-shadow:0 4px 16px rgba(47,158,158,0.35);
-    transition:transform .15s, opacity .15s, box-shadow .15s;
+    box-shadow:var(--elev-2);
+    transition:transform var(--d2) var(--ease-spring), opacity var(--d2) var(--ease-std),
+               box-shadow var(--d2) var(--ease-std);
     -webkit-tap-highlight-color:transparent;
   }
-  .fab:active{ transform:scale(.92); box-shadow:0 2px 8px rgba(47,158,158,0.25) }
+  .fab:active{ transform:scale(.94); box-shadow:var(--elev-1) }
   .fab svg{ width:26px; height:26px; stroke:#fff; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round }
-  /* 侧栏打开时淡出 */
-  .fab.hidden{ opacity:0; pointer-events:none; transform:scale(.8) }
+  /* 侧栏打开 / 输入面板展开时让位：非线性淡出，不再生硬消失 */
+  .fab.hidden, body.dock-open .fab{
+    opacity:0; pointer-events:none; transform:translateY(10px) scale(.6);
+  }
 
   /* ---------- 编辑器（底部上滑面板，非全屏） ---------- */
   .editor-mask{ position:fixed; top:0;right:0;bottom:0;left:0; background:rgba(0,0,0,.30); z-index:195; opacity:0; pointer-events:none; transition:opacity .25s }
@@ -299,12 +357,12 @@
     height:90vh; max-height:90vh;
     background:var(--paper); z-index:200;
     display:flex; flex-direction:column;
-    border-radius:20px 20px 0 0;
-    box-shadow:0 -8px 30px rgba(0,0,0,0.18);
+    border-radius:var(--r-xl) var(--r-xl) 0 0;
+    box-shadow:var(--elev-4);
     transform:translateY(100%); visibility:hidden;
-    transition:transform .3s cubic-bezier(.4,0,.2,1), visibility 0s linear .3s;
+    transition:transform var(--d3) var(--ease-std), visibility 0s linear .3s;
   }
-  .editor.open{ transform:translateY(0); visibility:visible; transition:transform .3s cubic-bezier(.4,0,.2,1), visibility 0s }
+  .editor.open{ transform:translateY(0); visibility:visible; transition:transform var(--d3) var(--ease-std), visibility 0s }
   .ed-bar{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:8px 14px; border-bottom:1px solid var(--line); background:var(--paper-2) }
   .ed-grabber{ width:36px; height:4px; border-radius:2px; background:var(--muted); opacity:.4; margin:2px auto 4px; flex-basis:100%; flex-shrink:0; cursor:grab; }
   .ed-close{
@@ -314,14 +372,14 @@
   }
   .ed-close:active{ background:rgba(0,0,0,.06); color:var(--ink) }
   .ed-title{ flex:1 1 0%; min-width:80px; font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; font-size:15px; color:var(--cyan); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-  .ed-btn{ border:1px solid var(--line); background:var(--paper); color:var(--ink); padding:5px 13px; border-radius:8px; cursor:pointer; font-size:13px; white-space:nowrap; display:flex; align-items:center; gap:5px }
+  .ed-btn{ border:1px solid var(--line); background:var(--paper); color:var(--ink); padding:5px 13px; border-radius:var(--r-sm); cursor:pointer; font-size:13px; white-space:nowrap; display:flex; align-items:center; gap:5px }
   .ed-btn.primary{ border-color:var(--cyan); color:var(--cyan) }
   .ed-btn.primary:active{ background:var(--cyan); color:var(--paper) }
   .ed-tools{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; flex-basis:100% }
   .ed-fmt{ display:flex; align-items:center; gap:4px }
   .ed-fmt button{
     min-width:34px; height:30px; padding:0 9px; border:1px solid var(--line);
-    background:var(--paper); color:var(--ink); border-radius:8px; cursor:pointer;
+    background:var(--paper); color:var(--ink); border-radius:var(--r-sm); cursor:pointer;
     font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center;
     -webkit-appearance:none; appearance:none;
   }
@@ -330,7 +388,7 @@
   .md-toggle{
     display:flex; align-items:center; gap:5px; height:30px; padding:0 11px;
     border:1px solid var(--line); background:var(--paper); color:var(--muted);
-    border-radius:8px; cursor:pointer; font-size:12.5px; font-weight:600; letter-spacing:.5px;
+    border-radius:var(--r-sm); cursor:pointer; font-size:12.5px; font-weight:600; letter-spacing:.5px;
     -webkit-appearance:none; appearance:none; transition:all .15s;
   }
   .md-toggle svg{ color:var(--muted) }
@@ -341,7 +399,7 @@
   .ed-input{ flex:1; border:none; outline:none; resize:none; padding:24px clamp(16px,4vw,48px); background:var(--paper); color:var(--ink); font-size:15.5px; line-height:1.8; font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif; -webkit-appearance:none }
   .ed-preview{ flex:1; overflow-y:auto; padding:24px clamp(16px,4vw,48px); border-left:1px solid var(--line); background:var(--paper); -webkit-overflow-scrolling:touch }
   .mode-tab{ display:none }
-  .mode-tab button{ padding:8px 14px; border:1px solid var(--line); background:var(--paper); color:var(--muted); font-size:13px; cursor:pointer; border-radius:8px }
+  .mode-tab button{ padding:8px 14px; border:1px solid var(--line); background:var(--paper); color:var(--muted); font-size:13px; cursor:pointer; border-radius:var(--r-sm) }
   .mode-tab button.active{ color:var(--cyan); border-color:var(--cyan); background:rgba(47,158,158,0.10) }
   .ed-input.hide, .ed-preview.hide{ display:none }
 
@@ -350,14 +408,14 @@
   .md h1{ font-size:1.7em } .md h2{ font-size:1.4em } .md h3{ font-size:1.2em }
   .md p{ margin:.6em 0 }
   .md a{ color:var(--cyan-soft); text-decoration:underline; text-underline-offset:2px }
-  .md code{ background:var(--paper-2); padding:.1em .4em; border-radius:5px; font-size:.9em; font-family:Consolas,monospace }
-  .md pre{ background:var(--paper-2); padding:14px 16px; border-radius:10px; overflow-x:auto; margin:.7em 0; border:1px solid var(--line) }
+  .md code{ background:var(--paper-2); padding:.1em .4em; border-radius:var(--r-xs); font-size:.9em; font-family:Consolas,monospace }
+  .md pre{ background:var(--paper-2); padding:14px 16px; border-radius:var(--r-md); overflow-x:auto; margin:.7em 0; border:1px solid var(--line) }
   .md pre code{ background:none; padding:0 }
   .md blockquote{ border-left:3px solid var(--cyan-soft); padding:.2em 0 .2em 16px; color:var(--muted); margin:.7em 0 }
   .md ul,.md ol{ margin:.6em 0; padding-left:1.4em }
   .md li{ margin:.25em 0 }
   .md hr{ border:none; border-top:1px solid var(--line); margin:1.2em 0 }
-  .md img{ max-width:100%; border-radius:8px; margin:.5em 0 }
+  .md img{ max-width:100%; border-radius:var(--r-sm); margin:.5em 0 }
   .md table{ border-collapse:collapse; margin:.7em 0; font-size:.95em; width:100% }
   .md th,.md td{ border:1px solid var(--line); padding:7px 11px; text-align:left }
   .md th{ background:var(--paper-2); color:var(--cyan) }
@@ -366,17 +424,23 @@
   .md ul.task-list li.task input{ margin-top:.4em }
 
   /* ---------- 弹窗 ---------- */
-  .modal-mask{ position:fixed; top:0;right:0;bottom:0;left:0; background:rgba(0,0,0,.30); z-index:210; display:none; align-items:center; justify-content:center }
+  .modal-mask{ position:fixed; top:0;right:0;bottom:0;left:0; background:rgba(0,0,0,.30); z-index:210; display:none; align-items:stretch; justify-content:flex-end }
   .modal-mask.open{ display:flex }
-  .modal{ background:var(--paper); border-radius:14px; padding:24px 26px; max-width:400px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.18) }
+  /* MD1 dialog：24dp 最高层 → 单层 --elev-4；宽 ≤560dp 上限，取 420px；
+     手机 92% 宽接近 full-screen dialog 的小屏适配；flex 列 + sticky 头尾，
+     内容滚动时标题固定顶部、动作按钮固定底部（MD1 明文条款）。 */
+  .modal{ background:var(--paper); border-radius:0; padding:24px 26px;
+          width:92%; max-width:420px; height:100%; max-height:100%; margin:0;
+          box-shadow:var(--elev-4); display:flex; flex-direction:column;
+          overflow-y:auto; -webkit-overflow-scrolling:touch }
   .modal h2{ font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; color:var(--cyan); margin-bottom:4px; font-size:19px }
   .modal p{ font-size:13.5px; color:var(--ink); margin:.4em 0 }
   .modal .row{ display:flex; gap:10px; margin-top:18px; justify-content:flex-end }
-  .modal button{ padding:8px 16px; border-radius:9px; border:1px solid var(--line); background:var(--paper); cursor:pointer; font-size:14px; display:flex; align-items:center; gap:5px }
+  .modal button{ padding:8px 16px; border-radius:var(--r-sm); border:1px solid var(--line); background:var(--paper); cursor:pointer; font-size:14px; display:flex; align-items:center; gap:5px }
   .modal button.primary{ background:var(--cyan); color:var(--paper); border-color:var(--cyan) }
 
   /* 设置弹窗 */
-  .settings-modal{ max-width:380px; width:92%; max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column }
+  .settings-modal{ width:92%; max-width:420px; max-height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column }
   .settings-modal > h2{ flex-shrink:0 }
   .settings-modal > .settings-group{ flex-shrink:0 }
   .settings-modal > .settings-divider{ flex-shrink:0 }
@@ -385,7 +449,7 @@
   .settings-group-title{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; padding-left:2px }
   .settings-item{
     display:flex; align-items:center; gap:12px; padding:10px 12px;
-    border-radius:10px; cursor:pointer; font-size:14px; color:var(--ink);
+    border-radius:var(--r-md); cursor:pointer; font-size:14px; color:var(--ink);
     transition:background .12s;
   }
   .settings-item:active{ background:var(--paper-2) }
@@ -395,9 +459,9 @@
   .settings-item.active .opt-check{ opacity:1 !important }
   .settings-divider{ height:1px; background:var(--line); margin:8px 0 }
 
-  .review-modal{ max-width:540px; width:92% }
-  .about-modal{ max-width:640px; width:93% }
-  .about-body{ max-height:78vh; overflow-y:auto; padding-right:6px; -webkit-overflow-scrolling:touch }
+  .review-modal{ width:92%; max-width:420px }
+  .about-modal{ width:92%; max-width:420px }
+  .about-body{ flex:1 1 auto; overflow-y:auto; padding-right:6px; -webkit-overflow-scrolling:touch }
   .about-body h3{ font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; color:var(--cyan); font-size:17px; margin:22px 0 6px }
   .about-body h3:first-child{ margin-top:0 }
   .about-body .lead{ color:var(--muted); font-size:12.5px; font-style:italic; margin:0 0 4px; line-height:1.6 }
@@ -407,27 +471,28 @@
   .about-body .sub{ font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; font-size:15px; color:var(--ink); margin:16px 0 4px; font-weight:600 }
   .about-body .subnote{ color:var(--muted); font-size:12.5px; font-style:italic; margin:-2px 0 2px }
   .about-body .slogan{ font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; font-size:19px; color:var(--cyan); text-align:center; margin:12px 0 }
-  .about-note{ background:var(--paper-2); border-left:3px solid var(--cyan); border-radius:8px; padding:11px 14px; margin:18px 0 4px; font-size:12.5px; color:var(--ink); line-height:1.7 }
+  .about-note{ background:var(--paper-2); border-left:3px solid var(--cyan); border-radius:var(--r-sm); padding:11px 14px; margin:18px 0 4px; font-size:12.5px; color:var(--ink); line-height:1.7 }
   .about-note b{ color:var(--cyan) }
   .about-sign{ text-align:right; font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; color:var(--muted); margin-top:12px; font-size:14px }
   .review-meta{ font-size:12.5px; color:var(--muted); margin-bottom:10px; line-height:1.6 }
-  .review-body{ max-height:54vh; overflow-y:auto; font-size:15px; line-height:1.85; color:var(--ink); -webkit-overflow-scrolling:touch }
+  .review-body{ flex:1 1 auto; overflow-y:auto; font-size:15px; line-height:1.85; color:var(--ink); -webkit-overflow-scrolling:touch }
 
   /* ---------- 一言彩蛋 ---------- */
   .yiyan-mask{ position:fixed; top:0;right:0;bottom:0;left:0; z-index:230; display:none; align-items:center; justify-content:center; background:rgba(255,255,255,0.45); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); cursor:pointer; padding:8vw }
-  .yiyan-mask.open{ display:flex; animation:yiyanIn .45s ease both }
+  .yiyan-mask.open{ display:flex; animation:yiyanIn var(--d3) var(--ease-emp) both }
+  .yiyan-mask.closing{ display:flex; animation:yiyanOut var(--d2) var(--ease-out) both }
   .yiyan-text{ font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; font-size:clamp(18px,4.2vw,27px); color:var(--cyan); text-align:center; line-height:2.1; max-width:760px; text-shadow:0 1px 0 rgba(255,255,255,0.4); white-space:pre-wrap; word-break:break-word }
   .yiyan-text.empty{ font-size:clamp(40px,12vw,90px); line-height:1 }
   @keyframes yiyanIn{ from{ opacity:0; transform:scale(.97) } to{ opacity:1; transform:scale(1) } }
 
-  .toast{ position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--paper); padding:10px 20px; border-radius:10px; font-size:13.5px; z-index:240; opacity:0; transition:opacity .2s; pointer-events:none }
+  .toast{ position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--paper); padding:10px 20px; border-radius:var(--r-md); font-size:13.5px; z-index:240; opacity:0; transition:opacity .2s; pointer-events:none }
   .toast.show{ opacity:1 }
 
   /* ---------- 移动端（<820px） ---------- */
   .menu-toggle{
     display:none; position:relative; left:0; top:0; z-index:90;
     background:transparent; border:none; cursor:pointer;
-    width:36px; height:36px; border-radius:8px;
+    width:36px; height:36px; border-radius:var(--r-sm);
     display:flex; align-items:center; justify-content:center;
     color:var(--ink); flex-shrink:0;
   }
@@ -439,11 +504,12 @@
       position:fixed; left:0; right:0; top:0; bottom:0; z-index:100;
       width:78%; max-width:300px;
       overflow-y:auto; border-radius:0;
-      box-shadow:4px 0 24px rgba(0,0,0,0.12);
-      transform:translateX(-100%); transition:transform .32s cubic-bezier(.22,1,.36,1);
+      box-shadow:none;   /* 抽屉收起时不留纸叠硬边，否则屏幕左缘会露出一条竖线 */
+      transform:translateX(-100%);
+      transition:transform var(--d2) var(--ease-std), box-shadow var(--d2) var(--ease-std);
       background:var(--paper); will-change:transform;
     }
-    .sidebar.open{ transform:translateX(0); }
+    .sidebar.open{ transform:translateX(0); box-shadow:var(--elev-3); }
     .sidebar-mask{
       position:fixed; top:0;right:0;bottom:0;left:0; background:rgba(0,0,0,.25); z-index:90;
       opacity:0; pointer-events:none; transition:opacity .25s;
@@ -459,9 +525,10 @@
     .card.show-menu .meta-menu, .card.show-menu .acts{ opacity:1; display:flex }
     .swipe-zone{
       position:fixed; left:0; top:0; bottom:0; width:16px; z-index:50;
+      pointer-events:none;   /* 手势统一绑在 document，此空 div 不得拦截左缘点击 */
     }
-    /* FAB 在移动端稍微靠上一点，避免被系统手势条遮挡 */
-    .fab{ bottom:28px; right:16px; }
+    /* FAB 保持底部居中；底距含安全区，避免被系统手势条遮挡 */
+    .fab{ bottom:calc(20px + env(safe-area-inset-bottom, 0px)); }
   }
   @media (min-width:821px){ .menu-toggle{ display:none !important } .swipe-zone{ display:none !important } }
 
@@ -490,7 +557,279 @@
     .modal button > * + *{ margin-left:5px }
     .settings-item > * + *{ margin-left:12px }
     .mode-tab > * + *{ margin-left:6px }
+    /* 三端差异化 UX 新增的 flex 容器（iOS 12 不认 gap） */
+    .cp-bar > * + *{ margin-left:8px }
+    .cp-fmt > * + *{ margin-left:6px }
+    .qi-actions > * + *{ margin-left:8px }
+    .il-bar > * + *{ margin-left:8px }
+    .il-fmt > * + *{ margin-left:6px }
+    .qi-fmt > * + *{ margin-left:6px }
   }
+
+  /* ---------- 三端输入 / 就地编辑（2026-11-09 二次改版） ----------
+     手机 ≤820：底部高斯模糊常驻输入框 + 卡片就地编辑；
+     Pad 821–1199 / 电脑 ≥1200：顶部常驻输入框 + 卡片就地编辑。
+     FAB 与 90vh 上滑模态由作者主动废止（见交接文档第 14 节），DOM 保留但全局隐藏。
+     判定靠宽度断点 + pointer 能力，UA 只兜底 iOS12 已知缺陷；无 inset / :has / Grid。 */
+
+  /* 常驻输入框（Pad / 电脑） */
+  .composer{
+    display:none; max-width:720px; margin:0 auto 18px;
+    background:var(--paper); border:1px solid var(--line);
+    border-radius:var(--r-xs); padding:12px 14px 10px;
+  }
+  .composer:focus-within{ border-color:var(--muted) }
+  .cp-input, .qi-input, .il-input{
+    display:block; width:100%; border:none; outline:none; resize:none;
+    background:transparent; color:var(--ink); line-height:1.8;
+    -webkit-appearance:none; appearance:none;
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    -webkit-overflow-scrolling:touch; overflow-y:auto;
+  }
+  .cp-input{ min-height:72px; max-height:38vh; font-size:15px; padding:0 }
+  .cp-bar{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding-top:8px; margin-top:8px; border-top:1px solid var(--line) }
+  .cp-fmt{ display:flex; align-items:center; flex-wrap:wrap; gap:6px; flex:1 1 auto }
+  .cp-fmt button, .il-fmt button, .qi-fmt button{
+    min-width:34px; height:32px; padding:0 9px; border:1px solid var(--line);
+    background:var(--paper); color:var(--ink); border-radius:var(--r-xs); cursor:pointer;
+    font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center;
+    -webkit-appearance:none; appearance:none;
+  }
+  .cp-fmt button:active, .il-fmt button:active, .qi-fmt button:active{ background:var(--paper-2) }
+  .cp-send, .il-save, .qi-send{
+    background:var(--cyan); color:#fff; border:1px solid var(--cyan);
+    padding:7px 16px; border-radius:var(--r-xs); cursor:pointer; font-size:13px; font-weight:600;
+    white-space:nowrap; -webkit-appearance:none; appearance:none;
+  }
+  .cp-send:active, .il-save:active, .qi-send:active{ opacity:.85 }
+
+  /* 手机：FAB 唤出的临时输入面板（作者 2026-11-09 21:16 改）。
+     不再常驻：默认隐藏，点 FAB 后以非线性曲线自下方展开；收起时对称退回。
+     不透明纸片 + 近直角 + 纸叠阴影；卡片不会再从它后面滚过，高斯模糊因此去掉。 */
+  .dock{
+    display:none; position:fixed;
+    left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom, 0px)); z-index:60;
+    background:var(--dock-bg);
+    border:1px solid var(--line); border-radius:var(--r-sm);
+    box-shadow:var(--dock-shadow);
+    padding:9px 14px;
+    opacity:0; visibility:hidden; pointer-events:none;
+    transform:translateY(26px) scale(.97);
+    transform-origin:50% 100%;
+    transition:transform var(--d3) var(--ease-spring), opacity var(--d2) var(--ease-std),
+               visibility 0s linear var(--d3), box-shadow var(--d2) var(--ease-std);
+  }
+  .dock.expanded{
+    opacity:1; visibility:visible; pointer-events:auto;
+    transform:translateY(0) scale(1);
+    transition:transform var(--d3) var(--ease-spring), opacity var(--d2) var(--ease-std),
+               visibility 0s, box-shadow var(--d2) var(--ease-std);
+  }
+  .qi-input{ min-height:38px; max-height:26vh; font-size:15px; line-height:1.7; padding:0 }
+  .qi-actions{ display:none; align-items:center; flex-wrap:wrap; gap:8px; margin-top:8px; padding-top:8px; border-top:1px solid var(--line) }
+  .dock.expanded .qi-actions{ display:flex }
+  .qi-fmt{ display:flex; align-items:center; flex:1 1 auto; gap:6px }
+  .qi-cancel, .il-cancel{
+    border:1px solid var(--line); background:var(--paper); color:var(--muted);
+    padding:7px 14px; border-radius:var(--r-xs); cursor:pointer; font-size:13px; white-space:nowrap;
+    -webkit-appearance:none; appearance:none;
+  }
+  .qi-actions button{ min-height:38px }
+
+  /* Markdown 开关（2026-11-09 从退休模态迁进新版编辑栏）：纯文字、无青色高亮、无圆角堆叠 */
+  .cp-fmt .md-sw, .qi-fmt .md-sw, .il-fmt .md-sw{
+    font-size:12px; font-weight:600; letter-spacing:.4px; color:var(--muted);
+  }
+  .cp-fmt .md-sw.on, .qi-fmt .md-sw.on, .il-fmt .md-sw.on{
+    color:var(--ink); border-color:var(--muted);
+  }
+  /* ===== 单窗口即时渲染（编辑窗与预览窗合并，2026-11-09 本轮） =====
+     一个 .lv-wrap 里只有一个可交互的原生 textarea；渲染层 .lv-render 是它
+     正下方的绝对定位镜像，pointer-events:none。textarea 文字透明、caret 可见，
+     用户始终在同一个 textarea 上打字 → 光标 / 选区 / 输入法 / 滚动全部原生连续，
+     永远不会因 innerHTML 重绘而丢焦点。渲染层只写「零布局影响」的样式
+     （颜色 / 底色 / text-decoration / -webkit-text-stroke / opacity），
+     且保留源码里的每一个字符（含 ** # ` 等符号），因此逐字符与 textarea 对齐。
+     MD 关闭时渲染层隐藏、textarea 文字恢复可见 = 纯文本单窗口。
+     渲染层是 absolute，不占布局高度 → 开关 / 输入都不会产生高度跳变。 */
+  .lv-wrap{ position:relative; width:100% }
+  .lv-render, .lv-input{
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    font-size:15px; line-height:1.8; letter-spacing:normal; tab-size:4;
+    white-space:pre-wrap; word-break:break-word; overflow-wrap:break-word;
+    padding:0; margin:0; border:0;
+  }
+  .lv-render{
+    position:absolute; top:0; right:0; bottom:0; left:0; z-index:0;
+    overflow:hidden; pointer-events:none; color:var(--ink);
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .lv-render::-webkit-scrollbar, .lv-input::-webkit-scrollbar{ width:0; height:0; display:none }
+  .lv-input{
+    position:relative; z-index:1; display:block; width:100%;
+    background:transparent; color:transparent; -webkit-text-fill-color:transparent;
+    caret-color:var(--ink);   /* iOS 12 / Safari 12 起支持 */
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .lv-input::placeholder{ color:var(--muted); -webkit-text-fill-color:var(--muted); opacity:1 }
+  .lv-input::-webkit-input-placeholder{ color:var(--muted); -webkit-text-fill-color:var(--muted); opacity:1 }
+  .lv-input::selection{ background:rgba(47,158,158,0.26); color:var(--ink); -webkit-text-fill-color:var(--ink) }
+  /* 输入法组合期兜底：iOS 12 Safari 的 textarea.value 未必含预编辑拼音，
+     此时镜像层无法同步 → 临时显示原生 textarea 文字（由浏览器绘制，必定可见），
+     组合结束立即恢复镜像层。同一窗口、同一光标，不做位置/尺寸切换。 */
+  body.ime-on .lv-render{ display:none }
+  body.ime-on .lv-input{ color:var(--ink); -webkit-text-fill-color:var(--ink) }
+  /* 渲染层的「零布局影响」样式：只改观感，不改任何字形宽度/行高/缩进 */
+  .lv-mark{ color:var(--muted); opacity:.55 }
+  .lv-b{ color:var(--ink); -webkit-text-stroke:.35px currentColor }
+  .lv-i{ color:var(--ink); text-decoration:underline; text-underline-offset:2px }
+  .lv-code{ color:var(--cyan); background:var(--paper-2) }
+  .lv-tag{ color:var(--cyan) }
+  .lv-link{ color:var(--cyan); text-decoration:underline; text-underline-offset:2px }
+  .lv-h{ color:var(--cyan); -webkit-text-stroke:.2px currentColor }
+  .lv-q{ color:var(--muted) }
+  body.md-off .lv-render{ display:none }
+  body.md-off .lv-input{ color:var(--ink); -webkit-text-fill-color:var(--ink) }
+
+  /* 卡片就地编辑（三端通用） */
+  .card.editing{ border-color:var(--cyan) }
+  .card.editing .card-face{ display:none }
+  .inline-editor{ padding:12px 14px; background:var(--paper) }
+  .il-input{ min-height:120px; max-height:52vh; font-size:15px; padding:0 }
+  .il-bar{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--line) }
+  .il-fmt{ display:flex; align-items:center; flex-wrap:wrap; gap:6px; flex:1 1 auto }
+
+  /* Pad：侧栏收窄 + 主区限宽 + 触摸命中区 */
+  @media (min-width:821px) and (max-width:1199px){
+    .sidebar{ width:220px; flex:0 0 220px }
+    .composer, #list{ max-width:680px }
+    .cp-fmt button, .il-fmt button, .qi-fmt button, .qi-actions button{ min-height:44px; min-width:44px }
+  }
+  /* 电脑：主区限宽，消除整屏空白 */
+  @media (min-width:1200px){
+    .composer, #list{ max-width:720px }
+  }
+  @media (min-width:821px){
+    .composer{ display:block }
+    .dock{ display:none !important }
+    #list{ margin-left:auto; margin-right:auto }
+    .empty{ margin-top:12vh }
+  }
+  /* 手机：FAB 常驻、输入面板按需弹出；列表底部留白给 FAB 与展开面板 */
+  @media (max-width:820px){
+    .dock{ display:block }
+    .composer{ display:none }
+    .stream{ padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px)) }
+    /* 悬浮框：--dock-h 由 syncDockPadding() 量「框顶到屏幕底 + 缓冲」，已含悬浮底距与安全区 */
+    body.dock-open .stream{ padding-bottom:var(--dock-h, 190px) }
+    /* toast 抬到 dock 之上，避免「已保存」压住输入框 */
+    .toast{ bottom:calc(110px + env(safe-area-inset-bottom, 0px)) }
+    .il-input{ min-height:96px }
+    .il-bar{ gap:6px }
+    /* 悬浮框比通栏窄，展开态排成两行：格式组占一行，取消/保存靠右一行 */
+    .dock.expanded .qi-fmt{ flex-basis:100% }
+    .dock.expanded .qi-cancel{ margin-left:auto }
+  }
+  /* 触摸设备放大命中区（能力检测，不依赖 UA） */
+  @media (pointer:coarse){
+    .cp-fmt button, .il-fmt button, .qi-fmt button, .qi-actions button{ min-height:44px }
+  }
+  /* 上滑 90vh 模态仍由作者废止（DOM/JS 保留但永不显示）；FAB 已于 21:16 拍板复活 */
+  .editor, .editor-mask{ display:none !important }
+  /* 桌面 / Pad 用鼠标无左右手偏袒，FAB 只在手机出现 */
+  @media (min-width:821px){ .fab{ display:none !important } }
+
+  /* ---------- 圆润 + 文青：elevation 空间感 与非线性动效（2026-11-09） ----------
+     表层越亮 = 纸片越高；阴影随交互升降，但卡片 hover 不做位移浮起
+     （leaf-design-ideas.md 第 88 行「卡片 hover 仅左侧细竖线，别浮起」）。
+     绝不给 body/.app/.stream 加 transform——dock / 遮罩是 fixed，祖先 transform 会使其失效。 */
+  .composer{ background:var(--surface); box-shadow:var(--card-shadow);
+    transition:box-shadow var(--d2) var(--ease-std), border-color var(--d2) var(--ease-std) }
+  .composer:focus-within{ box-shadow:var(--elev-2); border-color:var(--cyan-soft) }
+  .inline-editor{ background:var(--surface) }
+  .card{ transition:box-shadow var(--d2) var(--ease-std), border-color var(--d2) var(--ease-std) }
+  .card:hover{ box-shadow:var(--elev-2) }
+  .card:active{ box-shadow:var(--elev-1) }
+  .card.editing{ box-shadow:var(--elev-3); border-color:var(--cyan) }
+  /* .dock 的展开动画在上面定义，这里只补展开态的纸叠高度，绝不重写 transition */
+  .dock.expanded{ box-shadow:var(--elev-4) }
+  .modal{ background:var(--surface-2); box-shadow:var(--elev-4) }
+  .toast{ box-shadow:var(--elev-3) }
+  /* 只在桌面给常驻侧栏 elevation；移动端抽屉自己的 --elev-3 不被覆盖 */
+  @media (min-width:821px){ .sidebar{ box-shadow:var(--elev-1) } }
+  .app-header{ background:var(--surface) }
+
+  /* 统一的过渡节奏：微交互 d1/standard，按压回弹 spring（轻微过冲，不是乱弹） */
+  button, .nav-btn, .tag-item, .settings-item, .sidebar-footer-item, .header-hamburger,
+  .app-header-btn, .sidebar-settings-btn, .card .meta-menu, .card .expand{
+    transition:background var(--d1) var(--ease-std), color var(--d1) var(--ease-std),
+               border-color var(--d1) var(--ease-std), opacity var(--d1) var(--ease-std),
+               box-shadow var(--d2) var(--ease-std),
+               transform var(--d1) var(--ease-spring);
+  }
+  .cp-fmt button:active, .qi-fmt button:active, .il-fmt button:active,
+  .cp-send:active, .qi-send:active, .il-save:active,
+  .modal button:active, .ed-btn:active, .md-sw:active{ transform:scale(.96) }
+
+  /* 入场节奏：弹层自下方轻微升起，emphasized 曲线 */
+  @keyframes leafRiseIn{
+    from{ opacity:0; transform:translateY(10px) scale(.985) }
+    to{ opacity:1; transform:none }
+  }
+  .modal-mask.open .modal{ animation:leafPanelIn var(--d3) var(--ease-sheet) both }
+  @keyframes leafToastIn{
+    from{ opacity:0; transform:translate(-50%, 8px) }
+    to{ opacity:1; transform:translate(-50%, 0) }
+  }
+  .toast.show{ opacity:1; animation:leafToastIn var(--d3) var(--ease-spring) both }
+
+  /* 全局 Markdown 渲染开关：开启态给按钮克制的青色底（非彩色投影） */
+  .cp-fmt .md-sw.on, .qi-fmt .md-sw.on, .il-fmt .md-sw.on{
+    background:var(--tag-bg); color:var(--tag-text); border-color:var(--cyan-soft);
+  }
+  /* 关闭态纯文本：保留换行，不注入 <br>；内联样式让导出文档同样生效 */
+  .plain-text{ white-space:pre-wrap; word-break:break-word }
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:.01ms !important;
+    }
+  }
+  /* ===== MD1 弹窗规格 · 统一动效（三端完全一致） =====
+     设置 / 关于 / 回顾 三个面板全部走同一组规则：
+       方向  translateX(100%) → 0（从右侧浮现），退场严格对称；
+       曲线  --ease-sheet:cubic-bezier(.16,.84,.28,1)（非线性、快起慢落、无过冲）；
+       时长  --d3:.38s 入场 / --d2:.24s 退场 / --d2 遮罩淡入淡出；
+       遮罩  同一 rgba(0,0,0,.30) scrim 覆盖全部内容；
+       降级  prefers-reduced-motion 下由 closeLayer() 立即关闭，不播动画。
+     三端差异 ONLY 面板宽度（手机 92% / 平板与桌面 min(420px,92%)），
+     动画方向、曲线、时长、遮罩节奏、状态类名在三端逐字相同。 */
+  @keyframes leafPanelIn{ from{ transform:translateX(100%); opacity:.55 } to{ transform:translateX(0); opacity:1 } }
+  @keyframes leafPanelOut{ from{ transform:translateX(0); opacity:1 } to{ transform:translateX(100%); opacity:.5 } }
+  @keyframes leafMaskFadeIn{ from{ opacity:0 } to{ opacity:1 } }
+  @keyframes leafMaskFadeOut{ from{ opacity:1 } to{ opacity:0 } }
+  @keyframes yiyanOut{ from{ opacity:1 } to{ opacity:0 } }
+  .modal-mask.open > .modal{ animation:leafPanelIn var(--d3) var(--ease-sheet) both }
+  .modal-mask.closing > .modal{ animation:leafPanelOut var(--d2) var(--ease-out) both }
+  .modal-mask.open{ animation:leafMaskFadeIn var(--d2) var(--ease-std) both }
+  .modal-mask.closing{ animation:leafMaskFadeOut var(--d2) var(--ease-std) both; pointer-events:none }
+  /* MD1：滚动时标题固定顶部、动作按钮固定底部；最多 2 个动作 */
+  .modal > h2{
+    flex:0 0 auto; position:-webkit-sticky; position:sticky; top:0; z-index:1;
+    background:var(--surface-2); padding-bottom:8px;
+    padding-top:env(safe-area-inset-top, 0px);
+  }
+  .modal > .row{
+    flex:0 0 auto; position:-webkit-sticky; position:sticky; bottom:0; z-index:1;
+    background:var(--surface-2); margin-top:auto; padding-top:10px;
+    padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+  /* 桌面 / 平板：面板限宽 420px，与手机共用同一动画 */
+  @media (min-width:821px){
+    .modal{ width:420px; max-width:420px }
+  }
+  /* iOS 12：flex 容器 gap 不支持，编辑栏新容器不用 gap，无需额外兜底 */
 </style>
 </head>
 <body>
@@ -560,9 +899,48 @@
   </aside>
 
   <main class="stream" id="stream">
+    <!-- 顶部常驻输入框（Pad / 电脑）：写新 MEMO，写完直接进下方流，不弹模态 -->
+    <div class="composer" id="composer">
+      <div class="lv-wrap">
+        <div class="lv-render" id="cpPreview" aria-hidden="true"></div>
+        <textarea class="cp-input lv-input" id="cpInput" placeholder="写点什么"></textarea>
+      </div>
+      <div class="cp-bar">
+        <div class="cp-fmt" id="cpFmt">
+          <button type="button" data-fmt="hash" title="标签">#</button>
+          <button type="button" data-fmt="bold" title="粗体"><b>B</b></button>
+          <button type="button" data-fmt="list" title="列表">≡</button>
+          <button type="button" data-fmt="img" title="插入本地图片">图片</button>
+          <button type="button" class="md-sw" data-md="1" title="Markdown 渲染 开/关（全局）" aria-pressed="true">MD</button>
+        </div>
+        <button type="button" class="cp-send" id="cpSend">保存</button>
+      </div>
+    </div>
+
     <div id="list"></div>
   </main>
 </div>
+
+<!-- 手机底部常驻输入框：高斯模糊悬浮层，单行回车即存，聚焦展开格式与多行 -->
+<div class="dock" id="quickInput">
+  <div class="lv-wrap">
+    <div class="lv-render" id="qiPreview" aria-hidden="true"></div>
+    <textarea class="qi-input lv-input" id="qiInput" rows="1" enterkeyhint="send" placeholder="写点什么"></textarea>
+  </div>
+  <div class="qi-actions" id="qiActions">
+    <div class="qi-fmt" id="qiFmt">
+      <button type="button" data-fmt="hash" title="标签">#</button>
+      <button type="button" data-fmt="bold" title="粗体"><b>B</b></button>
+      <button type="button" data-fmt="list" title="列表">≡</button>
+      <button type="button" data-fmt="img" title="插入本地图片">图片</button>
+      <button type="button" class="md-sw" data-md="1" title="Markdown 渲染 开/关（全局）" aria-pressed="true">MD</button>
+    </div>
+    <button type="button" class="qi-cancel" id="qiCancel">取消</button>
+    <button type="button" class="qi-send" id="qiSend">保存</button>
+  </div>
+</div>
+<!-- 三端共用的本地图片选择器 -->
+<input type="file" id="auxImgInput" accept="image/*" hidden>
 
 <!-- FAB 浮动加号按钮（flomo 式） -->
 <button class="fab" id="fabBtn" aria-label="新建 MEMO" title="新建 MEMO">
@@ -609,12 +987,13 @@
   <div class="ed-body">
     <textarea class="ed-input" id="edInput" placeholder="写点什么…支持 #标签、[ ] 任务、- 列表、> 引用、**粗体**、`代码`、表格、图片。"></textarea>
     <div class="ed-preview md" id="edPreview"></div>
+    <!-- 停用模态保持旧双区结构；它永不显示、不进入本轮单窗口规范，避免改动已废止代码 -->
   </div>
 </div>
 
 <!-- 设置弹窗 -->
 <div class="modal-mask" id="settingsMask">
-  <div class="modal settings-modal">
+  <div class="modal settings-modal" role="dialog" aria-modal="true" aria-label="设置">
     <h2 class="serif">设置</h2>
 
     <div class="settings-group">
@@ -683,7 +1062,7 @@
 
 <!-- 关于弹窗 -->
 <div class="modal-mask" id="aboutMask">
-  <div class="modal about-modal">
+  <div class="modal about-modal" role="dialog" aria-modal="true" aria-label="关于 Leaf">
     <h2 class="serif">关于 Leaf</h2>
     <div class="about-body">
       <p class="lead">微光浮影（m.x.）· 正式版 · Slogan：一叶落地，一念生根。</p>
@@ -751,7 +1130,7 @@
 
 <!-- 回顾弹窗 -->
 <div class="modal-mask" id="reviewMask">
-  <div class="modal review-modal">
+  <div class="modal review-modal" role="dialog" aria-modal="true" aria-label="每日一叶">
     <h2 class="serif">每日一叶</h2>
     <div class="review-meta" id="reviewMeta"></div>
     <div class="review-body md" id="reviewBody"></div>
@@ -926,15 +1305,16 @@ function updateFabVisibility(){
 
 /* ---------- 渲染：卡片列表 ---------- */
 function renderList(){
+  // 任何重绘都视为就地编辑结束（#list 被整体替换，inline DOM 随之销毁）
+  inlineCardId = null;
   var list = visibleCards();
   var wrap = $('list');
   if(list.length === 0){
-    wrap.innerHTML = '<div class="empty"><div class="big serif">'+(view==='trash'?'回收站是空的':'还没有 MEMO')+'</div>'
-      + (view==='all'?'<div>点击右下角 + 号写点什么吧。</div>':'')+'</div>';
+    wrap.innerHTML = '<div class="empty"><div class="big serif">'+(view==='trash'?'回收站是空的':'还没有 MEMO')+'</div></div>';
     return;
   }
   wrap.innerHTML = list.map(function(c){
-    var preview = parseMarkdown(c.content);
+    var preview = renderContent(c.content);
     var tags = c.tags.map(function(t){ return '<span class="tag-pill">#'+escapeHtml(t)+'</span>'; }).join('');
     var isLong = c.content.length > 200;
     var acts = view==='trash'
@@ -954,8 +1334,19 @@ function renderList(){
       + '</div></div>';
   }).join('');
   // 双保险：给每个操作按钮直绑 click，不依赖整条列表的事件冒泡（防御某些渲染器事件委托失效）
+  // 触屏另绑 touchend：部分移动浏览器把合成的 click 派发到 .card 祖先而非按钮本身，
+  // 导致 [data-act] 分支进不去、反而打开就地编辑器。touchend 按坐标确认后直接执行，
+  // 并 preventDefault 阻止后续合成 click（配合 runCardAction 去重做双保险）。
   Array.prototype.forEach.call(wrap.querySelectorAll('[data-act]'), function(b){
     b.addEventListener('click', function(e){ e.stopPropagation(); runCardAction(b.dataset.act, b.dataset.id); });
+    b.addEventListener('touchend', function(e){
+      var t = e.changedTouches && e.changedTouches[0];
+      if(!t) return;
+      var hit = document.elementFromPoint(t.clientX, t.clientY);
+      if(!hit || (hit !== b && !b.contains(hit))) return;   // 落点已滑出按钮则不算点击
+      if(e.cancelable) e.preventDefault();
+      runCardAction(b.dataset.act, b.dataset.id);
+    }, { passive:false });
   });
 }
 
@@ -1021,9 +1412,9 @@ function applyTheme(mode){
   var de = document.documentElement;
   var meta = document.querySelector('meta[name="theme-color"]');
   if(mode === 'dark'){ de.setAttribute('data-theme','dark'); meta.setAttribute('content','#16191c'); }
-  else if(mode === 'light'){ de.setAttribute('data-theme','light'); meta.setAttribute('content','#ffffff'); }
+  else if(mode === 'light'){ de.setAttribute('data-theme','light'); meta.setAttribute('content','#f5f3ee'); }
   else { de.removeAttribute('data-theme'); // 跟随系统
-    meta.setAttribute('content', window.matchMedia('(prefers-color-scheme: dark)').matches ? '#16191c' : '#ffffff'); }
+    meta.setAttribute('content', window.matchMedia('(prefers-color-scheme: dark)').matches ? '#16191c' : '#f5f3ee'); }
   var opts = document.querySelectorAll('.theme-opt');
   for(var i=0;i<opts.length;i++){ opts[i].classList.toggle('active', opts[i].getAttribute('data-theme-opt')===mode); }
 }
@@ -1033,16 +1424,19 @@ applyTheme((function(){ try{ return localStorage.getItem('leaf-theme') || 'syste
 // 系统主题变化时，仅跟随模式需同步 theme-color（避免重复调用 applyTheme 丢失手动选择）
 try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){
   if((localStorage.getItem('leaf-theme')||'system')==='system'){
-    document.querySelector('meta[name="theme-color"]').setAttribute('content', this.matches ? '#16191c' : '#ffffff');
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', this.matches ? '#16191c' : '#f5f3ee');
   }
 }); }catch(e){}
 
-/* ---------- 编辑器（全屏，新建/编辑已有卡片） ---------- */
+/* ---------- 旧模态编辑器：作者 2026-11-09 主动废止 ----------
+   DOM / CSS / JS 保留但全局隐藏、永不调用（交互入口已全部改走 openInlineEditor）。
+   包含「下拉关闭」手势与「编辑/预览切换」「MD 开关」的底层实现，故不删代码以免丢能力；
+   当前行为上均已停用，需要恢复时去掉 CSS 的 .fab/.editor/.editor-mask 隐藏规则即可。 */
 function openEditor(id){
   editingId = id; dirty = false;
   if(id){ var c = cards.find(function(x){ return x.id===id; }); $('edTitle').textContent = '编辑 MEMO'; $('edInput').value = c ? c.content : ''; }
   else { $('edTitle').textContent = '新建 MEMO'; $('edInput').value = ''; }
-  mdEnabled = true; updateMdState();
+  updateMdState();   // 全局开关由 leaf-md 持久化，模态不再重置
   $('edInput').dispatchEvent(new InputEvent('input', {bubbles:true}));
   $('editor').style.transform = '';
   $('editor').classList.add('open');
@@ -1097,21 +1491,311 @@ function toggleSelectionWrap(ta, mark){
   }
   ta.dispatchEvent(new InputEvent('input', {bubbles:true}));
 }
+/* ---------- 统一保存入口：composer / quick / inline / 模态四路共用 ----------
+   只管数据（IndexedDB + 重绘 + toast），不碰任何输入容器的开关状态。 */
+async function commitCard(content, editId){
+  var tags = extractTags(content), ts = now(), c;
+  if(editId){
+    c = cards.find(function(x){ return x.id===editId; });
+    if(c){ c.content = content; c.tags = tags; c.updated = ts; }
+  } else {
+    c = { id: uid(), content: content, tags: tags, created: ts, updated: ts, pinned:false, deleted:false };
+    cards.push(c);
+  }
+  await dbPut(c);
+  await refresh();
+  toast('已保存');
+  return c;
+}
+
 async function saveCard(){
   try{
-    var content = $('edInput').value;
-    var tags = extractTags(content), ts = now();
-    if(editingId){ var c = cards.find(function(x){ return x.id===editingId; }); c.content = content; c.tags = tags; c.updated = ts; }
-    else { var nc = { id: uid(), content: content, tags: tags, created: ts, updated: ts, pinned:false, deleted:false }; cards.push(nc); }
-    var targetId = editingId || cards[cards.length-1].id;
-    var targetCard = cards.find(function(x){ return x.id===targetId; }) || cards[cards.length-1];
-    await dbPut(targetCard);
-    $('editor').classList.remove('open'); $('editorMask').classList.remove('show'); document.body.style.overflow = '';
-    editingId = null; dirty = false; await refresh(); toast('已保存');
+    await commitCard($('edInput').value, editingId);
+    closeEditor();
   }catch(e){
     console.error('[Leaf] 保存失败:', e);
     alert('保存失败：'+(e.message||'未知错误'));
   }
+}
+
+/* ---------- 三端差异化输入（宽度断点 + pointer 能力，UA 不做布局分支） ---------- */
+function getMode(){
+  var w = window.innerWidth;
+  if(w <= 820) return 'phone';
+  if(w < 1200) return 'pad';
+  return 'desktop';
+}
+function autoGrow(ta, maxPx){
+  if(!ta) return;
+  ta.style.height = 'auto';
+  var h = Math.min(ta.scrollHeight || 40, maxPx || 320);
+  ta.style.height = (h > 40 ? h : 40) + 'px';
+}
+var imgTarget = null;
+var inlineCardId = null;
+
+/* 格式按钮共用：新 UI 传自己的 textarea，现有 .ed-* 工具栏的原绑定一行不改 */
+function applyFmt(ta, fmt){
+  if(fmt==='hash') insertAtCursor(ta, '#');
+  else if(fmt==='bold') toggleSelectionWrap(ta, '**');
+  else if(fmt==='list') insertAtCursor(ta, '\n- ');
+  else if(fmt==='img'){ imgTarget = ta; $('auxImgInput').click(); }
+}
+
+/* ---------- 全局 Markdown 渲染开关（2026-11-09 作者拍板：升级为单一全局开关） ----------
+   开 = 全站按 Markdown 渲染；关 = 纯文本（保留换行、HTML 转义防 XSS）。
+   一个状态 localStorage('leaf-md') 同时管五处：编辑栏实时预览 / 卡片列表 / 回顾 /
+   PDF 导出 / 图片导出。控件内置三套编辑栏的 MD 按钮，切换即时重绘且不销毁就地编辑器。
+   DOCX / Markdown / JSON 导出的是原文产物，本就无 Markdown 渲染，不受此开关影响。
+
+   统一渲染出口：所有「按当前开关显示内容」的地方都走这里。
+   关态用内联样式，保证导出文档（独立 HTML，无本站 CSS 变量）同样保留换行。 */
+function renderContent(src){
+  if(mdEnabled) return parseMarkdown(src || '');
+  return '<div class="plain-text" style="white-space:pre-wrap;word-break:break-word">'
+       + escapeHtml(src || '') + '</div>';
+}
+/* ---------- 单窗口即时渲染（编辑窗与预览窗合并，2026-11-09 本轮） ----------
+   镜像层 .lv-render 覆盖在透明 textarea 正下方。这里生成的 HTML 满足三条硬约束：
+   1) textContent 与输入 src 逐字符完全相同（含换行、含 Markdown 符号）；
+   2) 只使用零布局影响的样式（颜色 / 底色 / 描边 / 下划线 / 透明度），
+      绝不改 font-size / font-weight / font-family / 缩进 / margin / 行高；
+   3) textarea 从不重建、value 从不被本函数改写 → 光标、选区、输入法、
+      滚动位置全部由原生 textarea 连续保持。
+   块级重排（标题放大、列表缩进）交给已保存卡片 / 回顾 / 导出的 parseMarkdown()，
+   编辑窗内不做重排，这正是为了保住「光标与滚动连续」这一硬指标。 */
+function liveInline(s){
+  var out = '', i = 0, n = s.length, m, j, k;
+  while(i < n){
+    var c = s.charAt(i);
+    if(c === '`'){
+      j = s.indexOf('`', i+1);
+      if(j > i+1){
+        out += '<span class="lv-mark">`</span><span class="lv-code">'+escapeHtml(s.slice(i+1,j))+'</span><span class="lv-mark">`</span>';
+        i = j+1; continue;
+      }
+    }
+    if(c === '*' && s.charAt(i+1) === '*'){
+      j = s.indexOf('**', i+2);
+      if(j > i+2){
+        out += '<span class="lv-mark">**</span><span class="lv-b">'+escapeHtml(s.slice(i+2,j))+'</span><span class="lv-mark">**</span>';
+        i = j+2; continue;
+      }
+    }
+    if(c === '*'){
+      j = -1;
+      for(k = i+1; k < n; k++){ if(s.charAt(k) === '*'){ j = k; break; } }
+      if(j > i+1){
+        out += '<span class="lv-mark">*</span><span class="lv-i">'+escapeHtml(s.slice(i+1,j))+'</span><span class="lv-mark">*</span>';
+        i = j+1; continue;
+      }
+    }
+    if(c === '#'){
+      m = s.slice(i).match(/^#[A-Za-z0-9_\u4e00-\u9fa5]+/);
+      if(m){ out += '<span class="lv-tag">'+escapeHtml(m[0])+'</span>'; i += m[0].length; continue; }
+    }
+    if(c === '['){
+      var eb = s.indexOf(']', i+1);
+      if(eb > i+1 && s.charAt(eb+1) === '('){
+        var ep = s.indexOf(')', eb+2);
+        if(ep > eb+2){
+          out += '<span class="lv-mark">[</span><span class="lv-link">'+escapeHtml(s.slice(i+1,eb))+'</span>'
+               + '<span class="lv-mark">]('+escapeHtml(s.slice(eb+2,ep))+')</span>';
+          i = ep+1; continue;
+        }
+      }
+    }
+    out += escapeHtml(c); i++;
+  }
+  return out;
+}
+function liveLine(line){
+  var lead = '', body = line, cls = 'lv-t', m;
+  if((m = line.match(/^(\s{0,3})(#{1,6})(\s+)(.*)$/))){
+    lead = '<span class="lv-mark">'+escapeHtml(m[1]+m[2]+m[3])+'</span>'; body = m[4]; cls = 'lv-h';
+  } else if((m = line.match(/^(\s{0,3})(>)(\s?)(.*)$/))){
+    lead = '<span class="lv-mark">'+escapeHtml(m[1]+m[2]+m[3])+'</span>'; body = m[4]; cls = 'lv-q';
+  } else if((m = line.match(/^(\s{0,3})([-*+]|\d+\.)(\s+)(.*)$/))){
+    lead = '<span class="lv-mark">'+escapeHtml(m[1]+m[2]+m[3])+'</span>'; body = m[4];
+  } else if((m = line.match(/^(\s{0,3})(\[[ xX]\])(\s+)(.*)$/))){
+    lead = '<span class="lv-mark">'+escapeHtml(m[1]+m[2]+m[3])+'</span>'; body = m[4];
+  }
+  return lead + '<span class="'+cls+'">'+liveInline(body)+'</span>';
+}
+function renderInlineLive(src){
+  var s = String(src == null ? '' : src);
+  if(!s) return '';                       // 空窗口不产生任何 DOM，保持干净
+  return s.split('\n').map(liveLine).join('\n');
+}
+/* 镜像层滚动跟随：textarea 是唯一可滚动元素，把它的 scrollTop 同步给镜像层 */
+function syncLiveScroll(ta){
+  if(!ta || !ta.parentNode || !ta.parentNode.querySelector) return;
+  var box = ta.parentNode.querySelector('.lv-render');
+  if(box) box.scrollTop = ta.scrollTop;
+}
+function renderMdPreview(ta, box){
+  if(!box) return;
+  var v = (ta && ta.value) ? ta.value : '';
+  try{ box.innerHTML = renderInlineLive(v); }
+  catch(err){ box.textContent = v; }        // 异常：渲染失败也不让编辑窗空白
+  syncLiveScroll(ta);
+}
+/* dock 展开高度随输入框 / 预览变化，列表底部留白跟着走，避免最后一张卡片被压住 */
+function syncDockPadding(){
+  try{
+    var d = $('quickInput');
+    if(!d) return;
+    /* offsetHeight 不受展开动画的 translateY/scale 影响；用 getBoundingClientRect().top
+       会在动画途中量偏小，导致列表底部留白不够、最后一张卡片被面板吃掉。 */
+    var h = Math.round(d.offsetHeight) + 24;   // 面板高 + 底距 12 + 缓冲 12
+    if(h > 0) document.documentElement.style.setProperty('--dock-h', h + 'px');
+  }catch(e){}
+}
+function syncMdUI(){
+  Array.prototype.forEach.call(document.querySelectorAll('.md-sw'), function(b){
+    b.classList.toggle('on', mdEnabled);
+    b.setAttribute('aria-pressed', mdEnabled ? 'true' : 'false');
+  });
+  // MD 关 = 纯文本单窗口；MD 开 = 同窗口即时渲染。两者都是「一个窗口」
+  document.body.classList.toggle('md-off', !mdEnabled);
+  renderMdPreview($('cpInput'), $('cpPreview'));
+  renderMdPreview($('qiInput'), $('qiPreview'));
+  var il = document.querySelector('.inline-editor');
+  if(il) renderMdPreview(il.querySelector('.il-input'), il.querySelector('.lv-render'));
+  syncDockPadding();
+}
+/* 逐卡更新，不整体 renderList()，避免销毁正在进行的就地编辑；
+   回顾若正打开则重新抽一条；导出按调用时状态即时取，无需预先重绘。 */
+function syncGlobalMdRender(){
+  try{
+    Array.prototype.forEach.call(document.querySelectorAll('#list .card .body'), function(body){
+      var card = body.closest('.card');
+      if(!card) return;
+      var c = cards.find(function(x){ return x.id === card.dataset.id; });
+      if(c) body.innerHTML = renderContent(c.content);
+    });
+    if($('reviewMask').classList.contains('open')) showRandomReview();
+  }catch(e){ console.error('[Leaf] 全局渲染重绘失败:', e); }
+}
+function toggleMd(){
+  mdEnabled = !mdEnabled;
+  try{ localStorage.setItem('leaf-md', mdEnabled ? '1' : '0'); }catch(e){}
+  syncMdUI();            // 三套编辑栏按钮态 + 栏内实时预览
+  syncGlobalMdRender();  // 卡片列表 + 回顾
+}
+
+async function submitComposer(){
+  var ta = $('cpInput'), content = ta.value;
+  if(!content.trim()){ ta.focus(); return; }
+  try{
+    await commitCard(content, null);
+    ta.value = ''; autoGrow(ta, window.innerHeight*0.38); renderMdPreview(ta, $('cpPreview')); ta.focus();
+  }catch(e){ console.error('[Leaf] 发送失败:', e); alert('保存失败：'+(e.message||'未知错误')); }
+}
+async function submitQuick(){
+  var ta = $('qiInput'), content = ta.value;
+  if(!content.trim()){ collapseQuick(); return; }
+  try{
+    // 先清空收起再落库：避免「已保存」提示压在仍展开的输入框上
+    ta.value = ''; renderMdPreview(ta, $('qiPreview')); collapseQuick();
+    await commitCard(content, null);
+  }catch(e){ console.error('[Leaf] 速记失败:', e); alert('保存失败：'+(e.message||'未知错误')); }
+}
+/* FAB 主入口：点它以非线性动画唤出输入面板（不再是常驻输入框） */
+function expandQuick(){
+  var box = $('quickInput'), ta = $('qiInput');
+  box.classList.add('expanded');
+  document.body.classList.add('dock-open');
+  try{ ta.focus({preventScroll:true}); }catch(e){ try{ ta.focus(); }catch(e2){} }
+  autoGrow(ta, window.innerHeight*0.26);
+  syncDockPadding();
+  syncDockToViewport();
+  /* 展开动画结束后再量一次高度，覆盖预览 / 格式栏出现后的最终高度 */
+  if(window.requestAnimationFrame) requestAnimationFrame(function(){ syncDockPadding(); });
+  setTimeout(syncDockPadding, 420);
+}
+function collapseQuick(){
+  var box = $('quickInput'), ta = $('qiInput');
+  box.classList.remove('expanded'); box.style.bottom = '';
+  document.body.classList.remove('dock-open');
+  ta.style.height = ''; ta.blur();
+}
+/* 键盘弹起时把 dock 顶到键盘上方；iOS 12 无 visualViewport 时安全降级为浏览器默认行为 */
+function syncDockToViewport(){
+  if(!window.visualViewport) return;
+  try{
+    var vv = window.visualViewport;
+    var kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    $('quickInput').style.bottom = kb > 80 ? (kb + 12) + 'px' : '';   // 键盘上方仍保持悬浮间隙
+    syncDockPadding();
+  }catch(e){}
+}
+if(window.visualViewport){
+  try{
+    window.visualViewport.addEventListener('resize', syncDockToViewport);
+    window.visualViewport.addEventListener('scroll', syncDockToViewport);
+  }catch(e){}
+}
+
+/* ---------- 卡片就地编辑（三端通用） ---------- */
+function openInlineEditor(id){
+  closeInlineEditor();
+  var cardEl = null;
+  Array.prototype.forEach.call(document.querySelectorAll('#list .card'), function(el){
+    if(el.dataset.id === String(id)) cardEl = el;
+  });
+  var c = cards.find(function(x){ return x.id===id; });
+  if(!cardEl || !c) return;
+  cardEl.classList.add('editing');
+  var box = document.createElement('div');
+  box.className = 'inline-editor';
+  box.innerHTML = '<div class="lv-wrap">'
+    +   '<div class="lv-render" aria-hidden="true"></div>'
+    +   '<textarea class="il-input lv-input" placeholder=""></textarea>'
+    + '</div>'
+    + '<div class="il-bar">'
+    +   '<div class="il-fmt">'
+    +     '<button type="button" data-fmt="hash" title="标签">#</button>'
+    +     '<button type="button" data-fmt="bold" title="粗体"><b>B</b></button>'
+    +     '<button type="button" data-fmt="list" title="列表">≡</button>'
+    +     '<button type="button" data-fmt="img" title="插入本地图片">图片</button>'
+    +     '<button type="button" class="md-sw" data-md="1" title="Markdown 渲染 开/关（全局）" aria-pressed="true">MD</button>'
+    +   '</div>'
+    +   '<button type="button" class="il-cancel" data-il="cancel">取消</button>'
+    +   '<button type="button" class="il-save" data-il="save">保存</button>'
+    + '</div>';
+  cardEl.appendChild(box);
+  var ta = box.querySelector('.il-input'), pv = box.querySelector('.lv-render');
+  ta.value = c.content;
+  ta.addEventListener('input', function(){ autoGrow(ta, window.innerHeight*0.52); renderMdPreview(ta, pv); });
+  ta.addEventListener('scroll', function(){ syncLiveScroll(ta); });
+  box.addEventListener('click', function(e){
+    var m = e.target.closest('[data-md]');
+    if(m){ e.stopPropagation(); toggleMd(); return; }
+    var f = e.target.closest('[data-fmt]');
+    if(f){ e.stopPropagation(); applyFmt(ta, f.dataset.fmt); return; }
+    var a = e.target.closest('[data-il]');
+    if(a){ e.stopPropagation(); if(a.dataset.il==='cancel') closeInlineEditor(); else saveInline(); }
+  });
+  inlineCardId = id;
+  ta.focus();
+  autoGrow(ta, window.innerHeight*0.52);
+  syncMdUI();
+}
+function closeInlineEditor(){
+  var box = document.querySelector('.inline-editor');
+  if(box && box.parentNode) box.parentNode.removeChild(box);
+  var cardEl = document.querySelector('.card.editing');
+  if(cardEl) cardEl.classList.remove('editing');
+  inlineCardId = null;
+}
+async function saveInline(){
+  if(!inlineCardId) return;
+  var ta = document.querySelector('.inline-editor .il-input');
+  if(!ta) return;
+  try{
+    await commitCard(ta.value, inlineCardId);   // refresh() 重绘 #list，inline DOM 自然销毁
+  }catch(e){ console.error('[Leaf] 就地保存失败:', e); alert('保存失败：'+(e.message||'未知错误')); }
 }
 
 async function refresh(){ cards = await dbGetAll(); renderTags(); renderList(); updateNavState(); }
@@ -1127,7 +1811,13 @@ async function restoreCard(id){ var c = cards.find(function(x){ return x.id===id
 async function togglePin(id){ var c = cards.find(function(x){ return x.id===id; }); if(c){ c.pinned = !c.pinned; c.updated = now(); await dbPut(c); await refresh(); } }
 
   // 卡片操作统一入口：按钮直绑与 #list 委托共用，避免重复分支
+  // 触屏上 touchend 直绑与浏览器随后合成的 click 会先后到达；400ms 内同一动作去重，
+  // 避免「恢复 / 彻底删除」被执行两次（第二次时条目已移出视图，会误伤别的卡片）。
+  var lastCardAction = { key:'', t:0 };
   function runCardAction(act, id){
+    var key = act + '|' + id, t = Date.now();
+    if(lastCardAction.key === key && t - lastCardAction.t < 400) return;
+    lastCardAction = { key:key, t:t };
     if(act==='del') delCard(id,false);
     else if(act==='purge') delCard(id,true);
     else if(act==='restore') restoreCard(id);
@@ -1143,10 +1833,10 @@ function showRandomReview(){
   var days = Math.max(0, Math.round((now()-c.created)/86400000));
   $('reviewMeta').innerHTML = '<span>'+fmtDate(c.created)+'</span> · '+(days===0?'今天':days+' 天前')
     + (c.tags.length ? ' · '+c.tags.map(function(t){ return '#'+escapeHtml(t); }).join(' ') : '');
-  $('reviewBody').innerHTML = parseMarkdown(c.content);
+  $('reviewBody').innerHTML = renderContent(c.content);
 }
-function openReview(){ if(reviewPool().length===0){ toast('还没有可回顾的 MEMO'); return; } showRandomReview(); $('reviewMask').classList.add('open'); }
-function closeReview(){ $('reviewMask').classList.remove('open'); }
+function openReview(){ if(reviewPool().length===0){ toast('还没有可回顾的 MEMO'); return; } showRandomReview(); openLayer('reviewMask'); }
+function closeReview(){ closeLayer('reviewMask'); }
 
 /* ---------- 一言彩蛋 ---------- */
 var YIYAN_LINES = [
@@ -1171,7 +1861,7 @@ function yiyanPick(){
 function showYiyan(){
   var pick = yiyanPick();
   var el = $('yiyanText'); el.textContent = pick.text; el.classList.toggle('empty', !!pick.empty);
-  $('yiyanMask').classList.add('open');
+  openLayer('yiyanMask');
 }
 function tryYiyan(){
   if(Math.random() > 0.5) return;
@@ -1191,16 +1881,16 @@ function exportPDF(){
   var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
     + 'body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;padding:40px;color:#1f1f1f;line-height:1.8;font-size:14px}'
     + 'h1{font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif;color:#2f9e9e;border-bottom:1px solid #ddd;padding-bottom:8px}'
-    + '.memo{page-break-inside:avoid;margin-bottom:20px;padding:18px;border-radius:13px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,0.06)}'
+    + '.memo{page-break-inside:avoid;margin-bottom:20px;padding:18px;border-radius:2px;background:#fff;border:1px solid #e6e1d6;box-shadow:0 8px 20px -8px rgba(58,52,40,0.18)}'
     + '.memo-meta{font-size:11.5px;color:#999;margin-bottom:8px}'
-    + '.memo-tags span{display:inline-block;background:#e0f4f4;color:#2f9e9e;padding:2px 10px;border-radius:99px;font-size:11.5px;margin-right:4px}'
-    + '.md code{background:#f2f8f8;padding:.1em .4em;border-radius:4px;font-size:.9em}.md pre{background:#f2f8f8;padding:12px;border-radius:8px;overflow-x:auto}'
+    + '.memo-tags span{display:inline-block;background:#e0f4f4;color:#2f9e9e;padding:2px 10px;border-radius:2px;font-size:11.5px;margin-right:4px}'
+    + '.md code{background:#f2f8f8;padding:.1em .4em;border-radius:1px;font-size:.9em}.md pre{background:#f2f8f8;padding:12px;border-radius:2px;overflow-x:auto}'
     + '.md blockquote{border-left:3px solid #2f9e9e;padding-left:12px;color:#666}@media print{body{padding:20px}}</style></head><body>';
   html += '<h1>Leaf 导出 · '+list.length+' 条 MEMO</h1>';
   for(var ci=0;ci<list.length;ci++){
     var c = list[ci];
     html += '<div class="memo"><div class="memo-meta">'+fmtDate(c.updated)+(c.pinned?' · 置顶':'')+'</div>'
-      + '<div class="md">'+parseMarkdown(c.content)+'</div>'
+      + '<div class="md">'+renderContent(c.content)+'</div>'
       + (c.tags.length ? '<div class="memo-tags">'+c.tags.map(function(t){ return '<span>#'+escapeHtml(t)+'</span>'; }).join('')+'</div>' : '') + '</div>';
   }
   html += '<p style="color:#999;font-size:11px;margin-top:40px">由 Leaf 导出</p></body></html>';
@@ -1261,8 +1951,8 @@ function exportImage(){
   var single = list.length === 1;
   var cardToHtml = function(c){
     var meta = fmtDate(c.updated) + (c.pinned?' · 置顶':'');
-    var tags = c.tags.length ? '<div style="display:flex;flex-wrap:wrap;margin-top:8px">'+c.tags.map(function(t){ return '<span style="background:#e0f4f4;color:#2f9e9e;padding:2px 10px;border-radius:99px;font-size:11px;margin-right:4px;margin-bottom:4px">#'+escapeHtml(t)+'</span>'; }).join('')+'</div>' : '';
-    return '<div style="background:#fff;border-radius:13px;padding:18px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,0.06)"><div style="font-size:11.5px;color:#999;margin-bottom:8px;display:flex;justify-content:space-between">'+meta+'<span>⋯</span></div><div style="font-size:14.5px;line-height:1.75;color:#1f1f1f">'+parseMarkdown(c.content).replace(/<pre/g,'<pre style="background:#f2f8f8;padding:12px;border-radius:8px;overflow-x:auto;font-size:13px"').replace(/<code/g,'<code style="background:#f2f8f8;padding:1px 5px;border-radius:4px;font-size:.9em"')+'</div>'+tags+'</div>';
+    var tags = c.tags.length ? '<div style="display:flex;flex-wrap:wrap;margin-top:8px">'+c.tags.map(function(t){ return '<span style="background:#e0f4f4;color:#2f9e9e;padding:2px 10px;border-radius:2px;font-size:11px;margin-right:4px;margin-bottom:4px">#'+escapeHtml(t)+'</span>'; }).join('')+'</div>' : '';
+    return '<div style="background:#fff;border-radius:2px;padding:18px;margin-bottom:14px;border:1px solid #e6e1d6;box-shadow:0 8px 20px -8px rgba(58,52,40,0.18)"><div style="font-size:11.5px;color:#999;margin-bottom:8px;display:flex;justify-content:space-between">'+meta+'<span>⋯</span></div><div style="font-size:14.5px;line-height:1.75;color:#1f1f1f">'+renderContent(c.content).replace(/<pre/g,'<pre style="background:#f2f8f8;padding:12px;border-radius:2px;overflow-x:auto;font-size:13px"').replace(/<code/g,'<code style="background:#f2f8f8;padding:1px 5px;border-radius:1px;font-size:.9em"')+'</div>'+tags+'</div>';
   };
   var header = '<div style="text-align:center;margin-bottom:18px"><span style="font-family:\'Optima\',\'Palatino Linotype\',\'Palatino\',\'Candara\',\'Songti SC\',Georgia,\'Times New Roman\',serif;font-size:20px;font-weight:700;color:#2f9e9e">leaf.</span><span style="font-size:12px;color:#999;margin-left:8px">MEMO · '+list.length+'</span></div>';
   var footer = '<div style="text-align:center;color:#bbb;font-size:10px;margin-top:16px">由 Leaf 导出</div>';
@@ -1338,63 +2028,208 @@ function importMarkdown(file){
 var toastTimer;
 function toast(msg){ var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 1600); }
 
-/* ---------- 右滑手势打开侧栏 ---------- */
-var swipeState = { startX:0, startY:0, currentX:0, tracking:false, threshold: window.innerWidth * 0.2 };
+/* ---------- 侧栏：三端统一开关 + 手机贴左缘滑出 / 收起手势 ----------
+   此前失灵的四个根因（均由真事件实证复现，见交接文档第 19 节）：
+   ① threshold 在脚本加载时按初始 innerWidth 算一次，桌面加载后缩到手机时
+      阈值仍是 288px，375px 屏永远滑不到 → 改为每次手势按当前视口动态计算；
+   ② handleTouchMove 写下的 inline transition:none / transform / mask.opacity
+      从不清除，openSidebar() 只加 class → CSS 过渡被 inline 永久覆盖，开合硬跳变；
+      改为统一出口 setSidebar()，切换前先 clearSwipeInline() 交还控制权；
+   ③ 起步抖动判定 |dy|>|dx|*1.5 且 dx<0 立刻把 tracking 置 false、不可恢复；
+      改为 6px 起步容差 + 轴向锁定，且不再因轻微左偏杀死手势；
+   ④ handleTouchStart 在侧栏打开时直接 return，导致无法用手势收起；
+      改为打开态接受「任意位置左滑」收起。 */
+var EDGE = 60;   /* 贴靠左侧边缘的触发带（关闭态只认这一带） */
+var swipeState = { startX:0, startY:0, currentX:0, tracking:false, axis:null, wasOpen:false, threshold:0 };
+function swipeThreshold(){
+  return Math.min(Math.max(window.innerWidth * 0.12, 36), 96);
+}
+function clearSwipeInline(){
+  var sb = $('sidebar'), mk = $('sidebarMask');
+  sb.style.transition = ''; sb.style.transform = '';
+  mk.style.opacity = ''; mk.style.pointerEvents = '';
+}
+function resetSwipe(){ clearSwipeInline(); }
+/* 三端唯一状态出口：手机抽屉与桌面 / Pad 常驻侧栏共用同一组状态类 */
+function setSidebar(open){
+  clearSwipeInline();                       // 先清 inline，CSS 过渡才能生效（无跳变）
+  var sb = $('sidebar'), mk = $('sidebarMask');
+  if(open){ sb.classList.add('open'); mk.classList.add('show'); }
+  else    { sb.classList.remove('open'); mk.classList.remove('show'); }
+  if(window.innerWidth <= 820) $('appHeader').classList.toggle('hidden', open);
+  updateFabVisibility();
+}
+function openSidebar(){ setSidebar(true); }
+function closeSidebar(){ setSidebar(false); }
+function toggleSidebar(){ setSidebar(!$('sidebar').classList.contains('open')); }
+function closeSidebarMobile(){ if(window.innerWidth <= 820) setSidebar(false); }
+
 function handleTouchStart(e){
-  if(window.innerWidth > 820) return;
-  if($('sidebar').classList.contains('open')) return;
-  if(e.touches[0].clientX > 60) return;
-  swipeState.startX = e.touches[0].clientX;
-  swipeState.startY = e.touches[0].clientY;
-  swipeState.currentX = 0;
+  if(window.innerWidth > 820) return;       // 桌面 / Pad：侧栏常驻，不接管手势
+  var t = e.touches[0]; if(!t) return;
+  /* 可交互控件上不启动左缘手势：回收站「恢复」按钮落在 x=34~60 的触发带内，
+     一旦被接管，handleTouchMove 的 preventDefault 会吞掉浏览器合成的 click。 */
+  var tgt = e.target;
+  if(tgt && tgt.closest && tgt.closest(
+      'button, a, input, textarea, select, [data-act], [data-il], [data-fmt], [data-md], .inline-editor, .modal, .modal-mask')) return;
+  swipeState.wasOpen = $('sidebar').classList.contains('open');
+  if(!swipeState.wasOpen && t.clientX > EDGE) return;
+  swipeState.startX = t.clientX; swipeState.startY = t.clientY;
+  swipeState.currentX = 0; swipeState.axis = null;
+  swipeState.threshold = swipeThreshold();  // 动态阈值，视口变化后不再失效
   swipeState.tracking = true;
 }
 function handleTouchMove(e){
   if(!swipeState.tracking) return;
-  var dx = e.touches[0].clientX - swipeState.startX;
-  var dy = e.touches[0].clientY - swipeState.startY;
-  if(Math.abs(dy) > Math.abs(dx) * 1.5){
-    swipeState.tracking = false;
-    resetSwipe();
-    return;
+  var t = e.touches[0]; if(!t) return;
+  var dx = t.clientX - swipeState.startX, dy = t.clientY - swipeState.startY;
+  if(swipeState.axis === null){
+    if(Math.abs(dx) < 6 && Math.abs(dy) < 6) return;   // 起步抖动容差
+    swipeState.axis = Math.abs(dy) > Math.abs(dx) * 1.5 ? 'v' : 'h';
+    if(swipeState.axis === 'v'){ swipeState.tracking = false; resetSwipe(); return; }
   }
-  if(dx < 0){ swipeState.tracking = false; resetSwipe(); return; }
+  if(swipeState.axis !== 'h') return;
+  var th = swipeState.threshold, sb = $('sidebar'), mk = $('sidebarMask'), eff, progress;
+  if(swipeState.wasOpen){                     // 打开态：左滑收起
+    eff = Math.min(Math.max(-dx, 0), th); progress = 1 - eff / th;
+  } else {                                   // 关闭态：右滑展开
+    eff = Math.min(Math.max(dx, 0), th);  progress = eff / th;
+  }
   e.preventDefault();
   swipeState.currentX = dx;
-  var sb = $('sidebar');
-  var progress = Math.min(dx / swipeState.threshold, 1);
   sb.style.transition = 'none';
-  sb.style.transform = 'translateX('+(-(1-progress)*100)+'%)';
-  $('sidebarMask').style.opacity = String(progress * 0.25);
-  $('sidebarMask').style.pointerEvents = progress > 0.5 ? 'auto' : 'none';
+  sb.style.transform = 'translateX(' + (-(1-progress)*100) + '%)';
+  mk.style.opacity = String(progress * 0.25);
+  mk.style.pointerEvents = 'none';
 }
 function handleTouchEnd(e){
   if(!swipeState.tracking) return;
   swipeState.tracking = false;
-  if(swipeState.currentX >= swipeState.threshold){
-    openSidebar();
-  } else {
-    resetSwipe();
+  var th = swipeState.threshold, dx = swipeState.currentX;
+  var commit = swipeState.wasOpen ? (dx <= -th*0.5) : (dx >= th*0.5);
+  if(commit) setSidebar(!swipeState.wasOpen);           // 展开 / 收起
+  else setSidebar(swipeState.wasOpen);                  // 回弹到原状态，平滑归位
+}
+
+/* ---------- MD1 弹窗层：统一的触发 / 展示 / 关闭 / 异常 ----------
+   四个弹窗（设置 / 关于 / 回顾 / 一言）共用 .open / .closing 两个状态类，
+   共用同一组动效 token、同一 scrim、同一关闭途径（Esc / 点遮罩 / 关闭按钮）。
+   异常场景在这里一次性收口：
+     · 重复触发同一弹窗 → 不重入
+     · 动画进行中再次触发 → 先撤 closing 再重新入场，不叠加 scrim
+     · 打开新弹窗 → 旧弹窗播退场（互斥），不硬切、不叠两层遮罩
+     · reduced-motion → 立即关闭，不播动画
+     · 空数据 → 由 openReview() 拦截，不打开弹窗 */
+var LAYER_IDS = ['settingsMask','aboutMask','reviewMask','yiyanMask'];
+function isReducedMotion(){
+  try{ return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
+  catch(e){ return false; }
+}
+function layerOpen(id){ var m = $(id); return !!(m && m.classList.contains('open')); }
+function forceCloseLayer(id){ var m = $(id); if(m) m.classList.remove('open','closing'); }
+function openLayer(id){
+  var m = $(id);
+  if(!m) return;
+  if(m.classList.contains('open') && !m.classList.contains('closing')) return;  // 已打开：忽略重复触发
+  for(var i=0;i<LAYER_IDS.length;i++){
+    var o = LAYER_IDS[i];
+    if(o !== id && layerOpen(o)) closeLayer(o);        // 互斥：旧层播退场，不硬切
   }
+  m.classList.remove('closing');
+  m.classList.add('open');
 }
-function resetSwipe(){
-  var sb = $('sidebar');
-  sb.style.transition = '';
-  sb.style.transform = '';
-  $('sidebarMask').style.opacity = '';
-  $('sidebarMask').style.pointerEvents = '';
+function closeLayer(id){
+  var m = $(id);
+  if(!m || !m.classList.contains('open') || m.classList.contains('closing')) return;
+  m.classList.add('closing');
+  setTimeout(function(){ m.classList.remove('open'); m.classList.remove('closing'); },
+             isReducedMotion() ? 0 : 240);
 }
-function openSidebar(){
-  $('sidebar').classList.add('open');
-  $('sidebarMask').classList.add('show');
-  $('appHeader').classList.add('hidden');
-  updateFabVisibility();
+/* Esc 按 z-index 从高到低关闭最上层；返回是否处理了 */
+function closeTopLayer(){
+  var order = ['yiyanMask','settingsMask','aboutMask','reviewMask'];
+  for(var i=0;i<order.length;i++){
+    if(layerOpen(order[i])){ closeLayer(order[i]); return true; }
+  }
+  return false;
 }
+function openSettings(){ openLayer('settingsMask'); }
+function closeSettings(){ closeLayer('settingsMask'); }
 
 /* ---------- 事件绑定 ---------- */
 function bind(){
-  // ---- FAB 加号按钮：点击打开全屏编辑器（新建模式） ----
-  $('fabBtn').onclick = function(){ openEditor(null); };
+  // 单窗口即时渲染：scroll 不冒泡，用捕获阶段统一把 textarea 的滚动同步给镜像层，
+  // 覆盖 composer / dock / 动态创建的 inline editor 三套输入。
+  document.addEventListener('scroll', function(e){
+    if(e.target && e.target.classList && e.target.classList.contains('lv-input')) syncLiveScroll(e.target);
+  }, true);
+  // 输入法组合期兜底（捕获阶段，覆盖动态 inline editor）：组合时显示原生文字，
+  // 组合结束后恢复镜像层并再渲染一次，保证上屏文本即时着色。
+  document.addEventListener('compositionstart', function(e){
+    if(e.target && e.target.classList && e.target.classList.contains('lv-input')) document.body.classList.add('ime-on');
+  }, true);
+  document.addEventListener('compositionend', function(e){
+    if(!e.target || !e.target.classList || !e.target.classList.contains('lv-input')) return;
+    document.body.classList.remove('ime-on');
+    var wrap = e.target.parentNode;
+    var box = wrap && wrap.querySelector ? wrap.querySelector('.lv-render') : null;
+    if(box) renderMdPreview(e.target, box);
+  }, true);
+  // 全局 Markdown 渲染开关：读持久化状态（默认开），同步按钮态、栏内预览与全站渲染
+  try{ mdEnabled = localStorage.getItem('leaf-md') !== '0'; }catch(e){ mdEnabled = true; }
+  syncMdUI();
+
+  // ---- FAB（21:16 复活）：底部居中主入口，点它以非线性动画唤出输入面板 ----
+  $('fabBtn').onclick = function(){ expandQuick(); };
+
+  // ---- 三端输入：Pad / 电脑常驻 composer、手机底部 dock ----
+  $('cpSend').onclick = submitComposer;
+  $('cpInput').addEventListener('input', function(){ autoGrow(this, window.innerHeight*0.38); renderMdPreview(this, $('cpPreview')); });
+  $('cpInput').addEventListener('scroll', function(){ syncLiveScroll(this); });
+  $('cpInput').addEventListener('focus', function(){ autoGrow(this, window.innerHeight*0.38); });
+  $('cpFmt').addEventListener('click', function(e){
+    var m = e.target.closest('[data-md]');
+    if(m){ e.stopPropagation(); toggleMd(); return; }
+    var b = e.target.closest('[data-fmt]');
+    if(b) applyFmt($('cpInput'), b.dataset.fmt);
+  });
+  $('qiInput').addEventListener('focus', function(){
+    $('quickInput').classList.add('expanded');
+    document.body.classList.add('dock-open');
+    autoGrow(this, window.innerHeight*0.26);
+    syncDockPadding();
+    syncDockToViewport();
+  });
+  $('qiInput').addEventListener('input', function(){
+    autoGrow(this, window.innerHeight*0.26);
+    renderMdPreview(this, $('qiPreview'));
+    syncDockPadding();
+  });
+  $('qiInput').addEventListener('scroll', function(){ syncLiveScroll(this); });
+  // 回车即存，Shift+Enter 换行；stopPropagation 避免与全局 Ctrl/⌘+Enter 重复提交
+  $('qiInput').addEventListener('keydown', function(e){
+    if(e.key!=='Enter' || e.shiftKey) return;
+    e.preventDefault(); e.stopPropagation(); submitQuick();
+  });
+  $('qiFmt').addEventListener('click', function(e){
+    var m = e.target.closest('[data-md]');
+    if(m){ e.stopPropagation(); toggleMd(); return; }
+    var b = e.target.closest('[data-fmt]');
+    if(b) applyFmt($('qiInput'), b.dataset.fmt);
+  });
+  $('qiSend').onclick = submitQuick;
+  $('qiCancel').onclick = collapseQuick;
+  $('auxImgInput').addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if(!file || !imgTarget) return;
+    var reader = new FileReader(), ta = imgTarget;
+    reader.onload = function(){
+      insertAtCursor(ta, '\n![图片](' + reader.result + ')\n');
+      autoGrow(ta, window.innerHeight*0.52);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; imgTarget = null;
+  });
 
   // 彩蛋触发：双击/长按纯文字 Logo
   $('headerLogo').addEventListener('dblclick', function(){ tryYiyan(); });
@@ -1447,7 +2282,7 @@ function bind(){
   $('modeTab').querySelectorAll('button').forEach(function(b){ b.onclick = function(){ setMode(b.dataset.mode); }; });
 
   // 编辑器工具栏（你已定下的功能）：Markdown 开关 + 模板插入
-  $('mdToggle').onclick = function(){ mdEnabled = !mdEnabled; updateMdState(); };
+  $('mdToggle').onclick = toggleMd;   // 与新版编辑栏共用一个开关入口
   $('fmtHash').onclick = function(){ insertAtCursor($('edInput'), '#'); };
   $('fmtBold').onclick = function(){ toggleSelectionWrap($('edInput'), '**'); };
   $('fmtList').onclick = function(){ insertAtCursor($('edInput'), '- '); };
@@ -1461,18 +2296,32 @@ function bind(){
       else if(e.key==='Escape'){ e.preventDefault(); closeEditor(); }
       return;
     }
+    var ae = document.activeElement;
+    if((e.ctrlKey||e.metaKey) && e.key==='Enter'){
+      if(ae === $('cpInput')){ e.preventDefault(); submitComposer(); return; }
+      if(ae === $('qiInput')){ e.preventDefault(); submitQuick(); return; }
+      if(inlineCardId && ae && ae.classList.contains('il-input')){ e.preventDefault(); saveInline(); return; }
+    }
     if(e.key==='Escape'){
-      if($('yiyanMask').classList.contains('open')){ e.preventDefault(); $('yiyanMask').classList.remove('open'); }
-      else if($('reviewMask').classList.contains('open')){ e.preventDefault(); closeReview(); }
-      else if($('aboutMask').classList.contains('open')){ e.preventDefault(); $('aboutMask').classList.remove('open'); }
-      else if($('settingsMask').classList.contains('open')){ e.preventDefault(); $('settingsMask').classList.remove('open'); }
+      if(inlineCardId){ e.preventDefault(); closeInlineEditor(); return; }
+      if($('quickInput').classList.contains('expanded')){ e.preventDefault(); collapseQuick(); return; }
+      if($('sidebar').classList.contains('open')){ e.preventDefault(); closeSidebar(); return; }
+      if(closeTopLayer()){ e.preventDefault(); return; }
     }
   });
 
   // 卡片交互
   $('list').addEventListener('click', function(e){
     if(typeof cardSwipe !== 'undefined' && cardSwipe.fired){ cardSwipe.fired = false; return; }
+    // 就地编辑态：面板内点击由 inline-editor 自己处理，别再触发卡片展开/编辑
+    if(e.target.closest('.inline-editor') || e.target.closest('.card.editing')) return;
     var actEl = e.target.closest('[data-act]');
+    // 触屏合成 click 的 target 偶尔漂到 .card / #list 祖先；按落点坐标再找一次按钮，
+    // 避免「点恢复却打开就地编辑器」。滑动后由上面的 cardSwipe.fired 先拦掉。
+    if(!actEl && typeof e.clientX === 'number'){
+      var hitEl = document.elementFromPoint(e.clientX, e.clientY);
+      if(hitEl && hitEl.closest) actEl = hitEl.closest('[data-act]');
+    }
     if(actEl){ e.stopPropagation(); runCardAction(actEl.dataset.act, actEl.dataset.id); return; }
     if(e.target.classList.contains('expand')){ e.stopPropagation(); toggleExpand(e.target.closest('.card')); return; }
     if(e.target.closest('.meta-menu')){
@@ -1484,66 +2333,49 @@ function bind(){
       }
       return;
     }
-    // 点卡片本体：移动端=展开长 memo，桌面端=编辑
+    // 点卡片本体：三端一律就地展开编辑；长 memo 的「展开」按钮仍可纯阅读
     var cardEl = e.target.closest('.card');
     if(!cardEl) return;
-    var body = cardEl.querySelector('.body');
-    if(window.innerWidth <= 820){
-      if(body && body.classList.contains('truncated')) toggleExpand(cardEl);
-    } else {
-      openEditor(cardEl.dataset.id);
-    }
+    openInlineEditor(cardEl.dataset.id);
   });
 
-  // 卡片滑动手势：右滑置顶 / 左滑删除（仅移动端、非回收站、非边缘）
+  // 卡片滑动手势：手机右滑置顶 / 左滑删除；回收站右滑彻底删除 / 左滑恢复。
+  // touch 与桌面鼠标拖动共用同一套状态、方向判断与提示文案，三端表现一致。
   var cardSwipe = { el:null, face:null, startX:0, startY:0, dx:0, tracking:false, fired:false, lpTimer:null };
-  function listTouchStart(e){
-    if(window.innerWidth > 820) return;
-    // 关键修复：每次新手势先清掉上一次可能残留的"吞点击"标记，
-    // 否则进入回收站后第一次点"恢复/彻底删除"会被误吞（点击无反应）
+  function swipeStart(x, y, target, edgeGuard){
+    // 每次新手势先清掉上一次可能残留的"吞点击"标记，否则第一次点按钮会被误吞
     cardSwipe.fired = false; cardSwipe.tracking = false;
-    if($('sidebar').classList.contains('open')) return;
-    if(e.touches[0].clientX <= 60) return;                 // 左缘留给侧栏
-    var t = e.target;
-    if(t.closest('[data-act]') || t.closest('.meta-menu') || t.closest('.expand')) return;
+    if($('sidebar').classList.contains('open')) return false;
+    if(edgeGuard && x <= 60) return false;                 // 手机左缘留给侧栏手势
+    var t = target;
+    if(!t || !t.closest) return false;
+    if(t.closest('[data-act]') || t.closest('.meta-menu') || t.closest('.expand') || t.closest('button')) return false;
     var card = t.closest('.card');
-    if(!card) return;
+    if(!card) return false;
     cardSwipe.el = card;
     cardSwipe.face = card.querySelector('.card-face');
-    cardSwipe.startX = e.touches[0].clientX;
-    cardSwipe.startY = e.touches[0].clientY;
+    cardSwipe.startX = x; cardSwipe.startY = y;
     cardSwipe.dx = 0; cardSwipe.tracking = true;
-    // 长按=编辑（仅"全部"视图；回收站卡片不可编辑，故不放长按）
-    if(view !== 'trash'){
-      clearTimeout(cardSwipe.lpTimer);
-      cardSwipe.lpTimer = setTimeout(function(){
-        if(!cardSwipe.tracking) return;
-        cardSwipe.fired = true;            // 吞掉随后的 click，避免又展开
-        cardSwipe.tracking = false;
-        listSwipeReset();
-        openEditor(card.dataset.id);
-      }, 450);
-    }
+    return true;
   }
-  function listTouchMove(e){
+  function swipeMove(x, y, ev){
     if(!cardSwipe.tracking) return;
-    var dx = e.touches[0].clientX - cardSwipe.startX;
-    var dy = e.touches[0].clientY - cardSwipe.startY;
+    var dx = x - cardSwipe.startX, dy = y - cardSwipe.startY;
     if(Math.abs(dy) > Math.abs(dx) * 1.5){ cardSwipe.tracking = false; clearTimeout(cardSwipe.lpTimer); listSwipeReset(); return; } // 竖向滚动优先
-    if(Math.abs(dx) > 10 || Math.abs(dy) > 10) clearTimeout(cardSwipe.lpTimer); // 开始移动即取消长按，交给滚动/滑动
-    e.preventDefault();
+    if(Math.abs(dx) > 10 || Math.abs(dy) > 10) clearTimeout(cardSwipe.lpTimer);
+    if(ev && ev.cancelable) ev.preventDefault();
     cardSwipe.dx = Math.max(-180, Math.min(180, dx));
     cardSwipe.face.classList.add('swiping');
     cardSwipe.face.style.transform = 'translateX('+cardSwipe.dx+'px)';
     if(view === 'trash'){
-      cardSwipe.el.classList.toggle('tint-purge', cardSwipe.dx > 0);    // 右滑=彻底删除
-      cardSwipe.el.classList.toggle('tint-restore', cardSwipe.dx < 0);  // 左滑=恢复
+      cardSwipe.el.classList.toggle('tint-purge', cardSwipe.dx > 0);    // 右滑=删除（提示在左侧）
+      cardSwipe.el.classList.toggle('tint-restore', cardSwipe.dx < 0);  // 左滑=恢复（提示在右侧）
     } else {
       cardSwipe.el.classList.toggle('tint-pin', cardSwipe.dx > 0);
       cardSwipe.el.classList.toggle('tint-del', cardSwipe.dx < 0);
     }
   }
-  function listTouchEnd(){
+  function swipeEnd(){
     clearTimeout(cardSwipe.lpTimer);
     if(!cardSwipe.tracking) return;
     cardSwipe.tracking = false;
@@ -1569,6 +2401,27 @@ function bind(){
     if(cardSwipe.el) cardSwipe.el.classList.remove('tint-pin','tint-del','tint-purge','tint-restore');
     cardSwipe.el = null; cardSwipe.face = null; cardSwipe.dx = 0;
   }
+  function listTouchStart(e){
+    if(window.innerWidth > 820) return;
+    var t = e.touches[0]; if(!t) return;
+    swipeStart(t.clientX, t.clientY, e.target, true);
+  }
+  function listTouchMove(e){
+    var t = e.touches[0]; if(!t) return;
+    swipeMove(t.clientX, t.clientY, e);
+  }
+  function listTouchEnd(){ swipeEnd(); }
+  // 桌面 / Pad：鼠标拖动复用同一套方向与提示，避免只在触屏能看到文案。
+  // 仅在大屏启用（iOS 12 无 pointer 事件，这里也不用 pointer，纯 mouse，旧设备不受影响）。
+  function listMouseStart(e){
+    if(window.innerWidth <= 820 || e.button !== 0) return;
+    if(swipeStart(e.clientX, e.clientY, e.target, false) && e.cancelable) e.preventDefault();
+  }
+  function listMouseMove(e){ if(window.innerWidth > 820) swipeMove(e.clientX, e.clientY, e); }
+  function listMouseEnd(){ if(window.innerWidth > 820) swipeEnd(); }
+  $('list').addEventListener('mousedown', listMouseStart, { passive:false });
+  document.addEventListener('mousemove', listMouseMove, { passive:false });
+  document.addEventListener('mouseup', listMouseEnd, { passive:true });
   $('list').addEventListener('touchstart', listTouchStart, { passive:true });
   $('list').addEventListener('touchmove', listTouchMove, { passive:false });
   $('list').addEventListener('touchend', listTouchEnd, { passive:true });
@@ -1599,23 +2452,23 @@ function bind(){
   $('themeDark').onclick = function(){ setTheme('dark'); };
 
   // 设置弹窗（从侧栏底部触发）
-  $('sideSettingsBtn').onclick = function(){ $('settingsMask').classList.add('open'); closeSidebarMobile(); };
+  $('sideSettingsBtn').onclick = function(){ openSettings(); closeSidebarMobile(); };
   // 关于弹窗（从侧栏底部版本行触发）
-  $('sideAboutBtn').onclick = function(){ $('aboutMask').classList.add('open'); closeSidebarMobile(); };
-  $('settingsClose').onclick = function(){ $('settingsMask').classList.remove('open'); };
-  $('settingsMask').onclick = function(e){ if(e.target===$('settingsMask')) $('settingsMask').classList.remove('open'); };
-  $('setPdf').onclick = function(){ exportPDF(); $('settingsMask').classList.remove('open'); };
-  $('setDocx').onclick = function(){ exportDocx(); $('settingsMask').classList.remove('open'); };
-  $('setPng').onclick = function(){ exportImage(); $('settingsMask').classList.remove('open'); };
-  $('setJson').onclick = function(){ exportJSON(); $('settingsMask').classList.remove('open'); };
-  $('setMdExport').onclick = function(){ exportMarkdown(); $('settingsMask').classList.remove('open'); };
+  $('sideAboutBtn').onclick = function(){ openLayer('aboutMask'); closeSidebarMobile(); };
+  $('settingsClose').onclick = function(){ closeSettings(); };
+  $('settingsMask').onclick = function(e){ if(e.target===$('settingsMask')) closeSettings(); };
+  $('setPdf').onclick = function(){ exportPDF(); closeSettings(); };
+  $('setDocx').onclick = function(){ exportDocx(); closeSettings(); };
+  $('setPng').onclick = function(){ exportImage(); closeSettings(); };
+  $('setJson').onclick = function(){ exportJSON(); closeSettings(); };
+  $('setMdExport').onclick = function(){ exportMarkdown(); closeSettings(); };
   $('setImport').onclick = function(){ var inp = document.createElement('input'); inp.type='file'; inp.accept='.json,application/json'; inp.onchange = function(){ if(inp.files[0]) importJSON(inp.files[0]); }; inp.click(); };
   $('setMdImport').onclick = function(){ var inp = document.createElement('input'); inp.type='file'; inp.accept='.md,text/markdown'; inp.onchange = function(){ if(inp.files[0]) importMarkdown(inp.files[0]); }; inp.click(); };
-  $('setAbout').onclick = function(){ $('settingsMask').classList.remove('open'); $('aboutMask').classList.add('open'); };
+  $('setAbout').onclick = function(){ openLayer('aboutMask'); };
 
   // 关于页
-  $('aboutClose').onclick = function(){ $('aboutMask').classList.remove('open'); };
-  $('aboutMask').onclick = function(e){ if(e.target===$('aboutMask')) $('aboutMask').classList.remove('open'); };
+  $('aboutClose').onclick = function(){ closeLayer('aboutMask'); };
+  $('aboutMask').onclick = function(e){ if(e.target===$('aboutMask')) closeLayer('aboutMask'); };
 
   // 回顾
   $('reviewNext').onclick = showRandomReview;
@@ -1623,10 +2476,10 @@ function bind(){
   $('reviewMask').onclick = function(e){ if(e.target===$('reviewMask')) closeReview(); };
 
   // 一言
-  $('yiyanMask').onclick = function(){ $('yiyanMask').classList.remove('open'); };
+  $('yiyanMask').onclick = function(){ closeLayer('yiyanMask'); };
 
   // 侧栏遮罩
-  $('sidebarMask').onclick = function(){ closeSidebarMobile(); updateFabVisibility(); };
+  $('sidebarMask').onclick = function(){ closeSidebar(); };
 
   // 编辑器下拉关闭手势（仅从工具栏/手柄区域下拉，阈值 80px）
   var edDrag = { y:0, x:0, dy:0, track:false, moved:false };
@@ -1660,17 +2513,15 @@ function bind(){
   $('editor').addEventListener('touchend', edDragEnd, { passive:true });
   $('editor').addEventListener('touchcancel', edDragEnd, { passive:true });
 
-  // 右滑手势
+  // 左缘右滑展开 / 左滑收起（三端统一：桌面不接管）
   document.addEventListener('touchstart', handleTouchStart, { passive: false });
   document.addEventListener('touchmove', handleTouchMove, { passive: false });
   document.addEventListener('touchend', handleTouchEnd, { passive: true });
+  document.addEventListener('touchcancel', function(){ swipeState.tracking = false; resetSwipe(); }, { passive: true });
+  // 异常场景：旋转 / 分屏 / resize 时清掉手势期 inline 残留，避免状态卡死
+  window.addEventListener('resize', function(){ clearSwipeInline(); });
 }
-function toggleSidebar(){
-  var isOpen = $('sidebar').classList.contains('open');
-  if(isOpen){ $('sidebar').classList.remove('open'); $('sidebarMask').classList.remove('show'); $('appHeader').classList.remove('hidden'); updateFabVisibility(); }
-  else{ openSidebar(); }
-}
-function closeSidebarMobile(){ if(window.innerWidth<=820){ $('sidebar').classList.remove('open'); $('sidebarMask').classList.remove('show'); $('appHeader').classList.remove('hidden'); resetSwipe(); updateFabVisibility(); } }
+/* toggleSidebar / closeSidebarMobile 已在侧栏手势区块统一定义（三端共用 setSidebar） */
 
 /* ---------- Service Worker 注册 ---------- */
 function registerSW(){
