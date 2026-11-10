@@ -34,6 +34,8 @@
     --elev-1:0 2px 6px -2px rgba(58,52,40,0.14);
     --elev-2:0 5px 12px -3px rgba(58,52,40,0.16);
     --elev-3:0 10px 22px -6px rgba(58,52,40,0.18);
+    /* 抽屉专用：侧向阴影，纯向下的 elev-3 贴在屏幕左缘看不出"纸从边上压过来" */
+    --drawer-shadow:18px 0 48px -16px rgba(26,24,20,0.55), 0 0 0 1px rgba(48,44,36,0.06);
     --elev-4:0 16px 34px -10px rgba(58,52,40,0.20);
     --card-shadow:var(--elev-1);
     /* 非线性动效：standard 状态 / emphasized 入场 / 轻微回弹（作者要求减弱幅度） */
@@ -58,6 +60,7 @@
     --elev-1:0 2px 6px -2px rgba(0,0,0,0.44);
     --elev-2:0 5px 12px -3px rgba(0,0,0,0.50);
     --elev-3:0 10px 22px -6px rgba(0,0,0,0.56);
+    --drawer-shadow:18px 0 48px -16px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.07);
     --elev-4:0 16px 34px -10px rgba(0,0,0,0.62);
     --card-shadow:var(--elev-1);
     --dock-bg:var(--surface-2); --dock-blur-bg:var(--surface-2);
@@ -74,6 +77,7 @@
         --elev-1:0 2px 6px -2px rgba(0,0,0,0.44);
         --elev-2:0 5px 12px -3px rgba(0,0,0,0.50);
         --elev-3:0 10px 22px -6px rgba(0,0,0,0.56);
+    --drawer-shadow:18px 0 48px -16px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.07);
         --elev-4:0 16px 34px -10px rgba(0,0,0,0.62);
         --card-shadow:var(--elev-1);
         --dock-bg:var(--surface-2); --dock-blur-bg:var(--surface-2);
@@ -200,8 +204,57 @@
   /* 侧栏打开时隐藏顶部栏（flomo 式） */
   .app-header.hidden{ transform:translateY(-100%); pointer-events:none; opacity:0 }
 
-  .search{ width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:var(--r-md); background:var(--paper-2); color:var(--ink); font-size:14px; outline:none; -webkit-appearance:none; appearance:none }
-  .search:focus{ border-color:var(--cyan-soft); background:var(--paper) }
+  /* 侧栏搜索入口：不再是真的输入框，而是搜索浮层的触发器（2026-11-10 统一搜索交互）。
+     保留小写输入框的外观，让「点这里搜」的肌肉记忆还在，但输入动作发生在顶栏浮层里。 */
+  .search-trigger{
+    width:100%; display:flex; align-items:center; gap:8px; padding:9px 12px;
+    border:1px solid var(--line); border-radius:var(--r-md); background:var(--paper-2);
+    color:var(--muted); font:inherit; font-size:14px; text-align:left; cursor:pointer;
+    transition:border-color .15s, background .15s, color .15s;
+  }
+  .search-trigger svg{ flex-shrink:0 }
+  .search-trigger .st-text{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .search-trigger .st-kbd{
+    flex-shrink:0; font-size:11px; line-height:1; padding:3px 5px; color:var(--muted);
+    border:1px solid var(--line); border-radius:var(--r-xs);
+  }
+  .search-trigger:active{ background:var(--paper) }
+  .search-trigger.filtered{ color:var(--ink); border-color:var(--cyan-soft); background:var(--paper) }
+
+  /* ---------- 搜索浮层：锚在触发元素处、无遮罩、列表背后实时过滤 ----------
+     旧实现把 input 放进侧栏，顶栏图标只能 focus() 它并顺手开抽屉；手机抽屉自带全屏
+     .sidebar-mask（z-index:90 + pointer-events:auto），结果列表在 .stream 里被压在遮罩下：
+     页面变灰、结果看不清也点不动。现在三端共用同一个 popover，页面保持原样。 */
+  .search-pop{
+    position:fixed; z-index:130; left:0; top:0;
+    width:min(420px, calc(100vw - 24px));
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md);
+    box-shadow:var(--elev-3); padding:8px; display:none;
+  }
+  .search-pop.open{ display:block; animation:spIn .16s var(--ease-std) both }
+  @keyframes spIn{ from{ opacity:0; transform:translateY(-5px) } to{ opacity:1; transform:none } }
+  .sp-row{
+    display:flex; align-items:center; gap:8px; padding:6px 9px;
+    background:var(--paper-2); border-radius:var(--r-sm); border:1px solid transparent;
+  }
+  .search-pop:focus-within .sp-row{ border-color:var(--cyan-soft); background:var(--paper) }
+  .sp-row > svg{ color:var(--muted); flex-shrink:0 }
+  .sp-input{
+    flex:1; min-width:0; border:0; background:transparent; outline:none; padding:2px 0;
+    color:var(--ink); font:inherit; font-size:15px;
+  }
+  .sp-input::placeholder{ color:var(--muted) }
+  .sp-clear{
+    display:none; flex-shrink:0; border:0; background:none; cursor:pointer;
+    color:var(--muted); font-size:14px; line-height:1; padding:4px 5px; border-radius:var(--r-xs);
+  }
+  .sp-clear.show{ display:block }
+  .sp-clear:hover{ background:var(--paper-2); color:var(--ink) }
+  .sp-hint{
+    display:flex; justify-content:space-between; gap:10px;
+    padding:7px 9px 1px; font-size:11.5px; color:var(--muted);
+  }
+  .header-search.active{ color:var(--cyan) }
 
   /* 导航按钮 */
   .nav-btn{
@@ -388,6 +441,24 @@
   .fab.hidden, body.dock-open .fab{
     opacity:0; pointer-events:none; transform:translateY(10px) scale(.6);
   }
+
+  /* ---------- 长 memo 的悬浮「收起」（作者 2026-11-10 指定，形制照 flomo 那颗圆钮） ----------
+     只在「已展开 + 卡片高度超过一屏」时出现：内容跨越多屏后，顶部那个「收起」文字
+     早已滚出视口，手指要一路划回去，所以给一颗固定在右下角、随手可按的圆钮。
+     位置避开居中的新建 FAB（那颗在底部正中），一个左手一个右手，不打架。 */
+  .card-collapse{
+    position:fixed; right:22px; bottom:calc(24px + env(safe-area-inset-bottom, 0px)); z-index:82;
+    width:44px; height:44px; border-radius:50%; border:none; cursor:pointer;
+    background:var(--cyan); color:#fff;
+    display:none; align-items:center; justify-content:center;
+    box-shadow:0 8px 20px -8px rgba(30,60,60,.5);
+    transition:transform var(--d2) var(--ease-spring), opacity var(--d2) var(--ease-std);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .card-collapse.show{ display:flex; animation:ccIn var(--d2) var(--ease-spring) both }
+  .card-collapse:active{ transform:scale(.92) }
+  .card-collapse svg{ width:22px; height:22px; fill:none; stroke:#fff; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round }
+  @keyframes ccIn{ from{ opacity:0; transform:translateY(12px) scale(.7) } to{ opacity:1; transform:none } }
 
   /* ---------- 编辑器（底部上滑面板，非全屏） ---------- */
   .editor-mask{ position:fixed; top:0;right:0;bottom:0;left:0; background:rgba(0,0,0,.30); z-index:195; opacity:0; pointer-events:none; transition:opacity .25s }
@@ -583,12 +654,23 @@
       transition:transform var(--d2) var(--ease-std), box-shadow var(--d2) var(--ease-std);
       background:var(--paper); will-change:transform;
     }
-    .sidebar.open{ transform:translateX(0); box-shadow:var(--elev-3); }
+    .sidebar.open{ transform:translateX(0); box-shadow:var(--drawer-shadow); }
     .sidebar-mask{
       position:fixed; top:0;right:0;bottom:0;left:0; background:rgba(0,0,0,.25); z-index:90;
       opacity:0; pointer-events:none; transition:opacity .25s;
     }
     .sidebar-mask.show{ opacity:1; pointer-events:auto; }
+    /* 左缘滑动开侧栏：景深渐隐（作者 2026-11-10 指定）。
+       拖动进度写在 body 的 --sbp 上（0→1）：页面按比例后缩 + 渐隐，侧栏带着阴影推入。
+       只作用于 .stream / .app-header，抽屉本身的 translateX 逻辑一字未改。 */
+    .stream, .app-header{
+      transform:translateX(calc(var(--sbp, 0) * 16px)) scale(calc(1 - var(--sbp, 0) * 0.035));
+      opacity:calc(1 - var(--sbp, 0) * 0.42);
+      transition:transform var(--d2) var(--ease-std), opacity var(--d2) var(--ease-std);
+    }
+    body.sb-dragging .stream, body.sb-dragging .app-header{ transition:none }
+    /* 拖动中侧栏跟手（transform 无过渡），但阴影留着过渡，随进度淡入 */
+    body.sb-dragging .sidebar{ transition:transform 0s, box-shadow .22s var(--ease-std) }
     .menu-toggle{ display:flex }
     .stream{ padding-top:calc(var(--header-h) + 8px); padding-bottom:24px }
     .ed-body{ flex-direction:column }
@@ -605,6 +687,8 @@
     }
     /* FAB 保持底部居中；底距含安全区，避免被系统手势条遮挡 */
     .fab{ bottom:calc(20px + env(safe-area-inset-bottom, 0px)); }
+    /* 收起钮抬到底部输入坞（.dock）之上，否则会被那层纸盖住 */
+    .card-collapse{ right:14px; bottom:calc(88px + env(safe-area-inset-bottom, 0px)); width:42px; height:42px }
   }
   @media (min-width:821px){ .menu-toggle{ display:none !important } .swipe-zone{ display:none !important } }
 
@@ -958,9 +1042,20 @@
   </button>
   <div class="header-logo" id="headerLogo">leaf<span class="dot">.</span></div>
   <div class="header-spacer"></div>
-  <button class="header-search" id="headerSearch" aria-label="搜索">
+  <button class="header-search" id="headerSearch" aria-label="搜索" aria-expanded="false">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
   </button>
+</div>
+
+<!-- 搜索浮层：锚在被点的触发元素下方（顶栏图标 / 侧栏搜索行），无遮罩、不跳转，
+     输入即筛选下方列表；Esc 或点空白处收起（筛选结果保留，顶栏图标转为青色提示） -->
+<div class="search-pop" id="searchPop" role="dialog" aria-label="搜索 MEMO">
+  <div class="sp-row">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="sp-input" id="searchInput" type="text" placeholder="搜索 MEMO 或 #标签" autocomplete="off" spellcheck="false" aria-label="搜索关键词">
+    <button type="button" class="sp-clear" id="searchClear" aria-label="清空搜索">✕</button>
+  </div>
+  <div class="sp-hint"><span id="searchHint">输入即筛选 · Esc 关闭</span><span>Ctrl/⌘ K</span></div>
 </div>
 
 <div class="sidebar-mask" id="sidebarMask"></div>
@@ -973,7 +1068,11 @@
       <div class="sidebar-logo" id="logo"><span class="serif">leaf<span class="dot">.</span></span></div>
     </div>
 
-    <input class="search" id="search" placeholder="搜索…" autocomplete="off">
+    <button type="button" class="search-trigger" id="searchBox" aria-label="搜索 MEMO">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span class="st-text" id="searchBoxText">搜索…</span>
+      <span class="st-kbd">Ctrl K</span>
+    </button>
 
     <button class="nav-primary" id="navAll">
       <span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
@@ -1062,6 +1161,11 @@
 <!-- FAB 浮动加号按钮（flomo 式） -->
 <button class="fab" id="fabBtn" aria-label="新建 MEMO" title="新建 MEMO">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<!-- 长 memo 展开后的悬浮收起钮：只在高过一个屏幕时出现，点它收起并回到卡片顶部 -->
+<button type="button" class="card-collapse" id="cardCollapse" aria-label="收起展开的长 memo" title="收起">
+  <svg viewBox="0 0 24 24"><polyline points="6 14 12 8 18 14"/></svg>
 </button>
 
 <!-- 编辑器（底部上滑面板，非全屏，新建/编辑卡片） -->
@@ -1439,7 +1543,9 @@ function fmtDate(ts){
 function visibleCards(){
   var list = cards.filter(function(c){ return view==='trash' ? c.deleted : !c.deleted; });
   if(view==='all' && activeTag) list = list.filter(function(c){ return c.tags.indexOf(activeTag) > -1; });
-  if(view==='all' && searchTerm){
+  // 搜索对「当前视图」生效：标签页里搜这个标签、回收站里搜已删除的。
+  // 旧实现只认 view==='all'，在其它视图里输入毫无反应，是本次一并修掉的静默失效。
+  if(searchTerm){
     var t = searchTerm.toLowerCase();
     list = list.filter(function(c){ return c.content.toLowerCase().indexOf(t) > -1 || c.tags.some(function(tg){ return tg.toLowerCase().indexOf(t) > -1; }); });
   }
@@ -1481,13 +1587,91 @@ function updateFabVisibility(){
   }
 }
 
+/* ---------- 搜索浮层（2026-11-10 统一三端搜索交互） ----------
+   旧实现：输入框住在侧栏里，顶栏图标只能 focus() 它，手机上再顺手 toggleSidebar()。
+   可侧栏在手机上是个带全屏遮罩的抽屉（.sidebar-mask，z-index:90 + pointer-events:auto），
+   而结果列表渲染在 .stream 里——被压在遮罩底下：页面变灰、结果看不清也点不动。
+   现在搜索是一个锚在触发元素处的浮层：无 scrim、不跳转、不改 view，列表照常实时过滤。 */
+function placeSearchPop(trigger){
+  var pop = $('searchPop');
+  var vw = window.innerWidth, vh = window.innerHeight;
+  pop.style.visibility = 'hidden';
+  pop.classList.add('open');
+  var pw = pop.offsetWidth, ph = pop.offsetHeight;
+  var left, top;
+  if(vw <= 820){
+    // 手机：顶栏下沿一条通栏，指哪打哪，也不再借道抽屉。
+    // 用 offsetHeight 而不是 getBoundingClientRect：从抽屉里进来时顶栏正在 -100% 归位，
+    // 那一刻的 rect.bottom 还在屏幕外，浮层会贴到顶端。
+    left = 12;
+    top = $('appHeader').offsetHeight + 6;
+  } else {
+    var r = trigger ? trigger.getBoundingClientRect() : null;
+    left = r ? Math.min(Math.max(r.left, 12), vw - pw - 12) : (vw - pw - 12);
+    top = r ? r.bottom + 8 : 64;
+    if(r && top + ph > vh - 12) top = Math.max(12, r.top - ph - 8);   // 贴底则改向上弹
+  }
+  pop.style.left = Math.round(left) + 'px';
+  pop.style.top = Math.round(top) + 'px';
+  pop.style.visibility = '';
+}
+/* fromDrawer=true：从侧栏那行进来的，先把抽屉收掉——它是入口，不是搜索的容器 */
+function openSearch(trigger, fromDrawer){
+  var pop = $('searchPop');
+  if(fromDrawer) closeSidebarMobile();
+  if(pop.classList.contains('open') && pop._trigger === (trigger || $('headerSearch'))){
+    closeSearch();                                   // 再点同一个入口 = 收起
+    return;
+  }
+  pop._trigger = trigger || $('headerSearch');
+  $('searchInput').value = searchTerm;
+  placeSearchPop(pop._trigger);
+  updateSearchState(searchTerm);
+  $('headerSearch').setAttribute('aria-expanded', 'true');
+  setTimeout(function(){
+    var inp = $('searchInput');
+    try{ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }catch(e){}
+  }, 30);
+}
+function closeSearch(){
+  var pop = $('searchPop');
+  if(!pop.classList.contains('open')) return;
+  pop.classList.remove('open');
+  pop._trigger = null;
+  $('headerSearch').setAttribute('aria-expanded', 'false');
+}
+/* 有词时：清空钮出现、侧栏入口显示关键词、顶栏图标转青（提示列表正处于筛选态） */
+function updateSearchState(raw){
+  var v = (raw === undefined ? searchTerm : raw) || '';
+  var kw = v.trim();
+  $('searchClear').classList.toggle('show', !!v);
+  $('headerSearch').classList.toggle('active', !!kw);
+  var box = $('searchBox'), txt = $('searchBoxText');
+  if(box && txt){
+    box.classList.toggle('filtered', !!kw);
+    txt.textContent = kw || '搜索…';
+  }
+  var hits = document.querySelectorAll('#list .card').length;
+  $('searchHint').textContent = kw ? ('找到 ' + hits + ' 条 · Esc 关闭') : '输入即筛选 · Esc 关闭';
+}
+
 /* ---------- 渲染：卡片列表 ---------- */
 /* 展开卡片操作行（手机上点 ⋮ 用）。定时器挂在卡片元素上，重复点击只重置不叠加，
-   否则连点几次会出现「刚展开就被前一次的定时器收走」。 */
+   否则连点几次会出现「刚展开就被前一次的定时器收走」。
+   2026-11-10 修正：这里必须是真的 toggle——作者反馈「再点一次收不回去」。
+   同一次点击可能经 touchend 直绑与 click 委托两条路到达（防漂移的代价），
+   用 350ms 时间戳去重，保证两条路只算一次开关。 */
 function revealCardMenu(btn){
   var card = btn && btn.closest ? btn.closest('.card') : null;
   if(!card) return;
-  if(card._menuTimer) clearTimeout(card._menuTimer);
+  var now = Date.now();
+  if(card._menuStamp && now - card._menuStamp < 350) return;   // 同一击的重复派发
+  card._menuStamp = now;
+  if(card._menuTimer){ clearTimeout(card._menuTimer); card._menuTimer = 0; }
+  if(card.classList.contains('show-menu')){
+    card.classList.remove('show-menu');        // 再点一次 → 收起
+    return;
+  }
   card.classList.add('show-menu');
   card._menuTimer = setTimeout(function(){
     card._menuTimer = 0;
@@ -1500,7 +1684,11 @@ function renderList(){
   var list = visibleCards();
   var wrap = $('list');
   if(list.length === 0){
-    wrap.innerHTML = '<div class="empty"><div class="big serif">'+(view==='trash'?'回收站是空的':'还没有 MEMO')+'</div></div>';
+    var emptyMsg = view==='trash' ? '回收站是空的'
+                 : (searchTerm ? '没有匹配的 MEMO' : '还没有 MEMO');
+    wrap.innerHTML = '<div class="empty"><div class="big serif">'+emptyMsg+'</div>'
+      + (searchTerm ? '<div style="font-size:13px">换个词试试，或点顶栏搜索图标清空</div>' : '') + '</div>';
+    updateCollapseBtn();
     return;
   }
   wrap.innerHTML = list.map(function(c){
@@ -1553,6 +1741,8 @@ function renderList(){
       revealCardMenu(b);
     }, { passive:false });
   });
+  updateCollapseBtn();      // 重绘后同步悬浮收起钮（列表变了，展开的卡片可能已不在）
+  updateSearchState();      // 搜索命中数随列表刷新
 }
 
 /* ---------- 长 memo 展开 / 收起 ---------- */
@@ -1564,10 +1754,34 @@ function toggleExpand(card){
   if(body.classList.contains('truncated')){
     body.classList.remove('truncated'); body.classList.add('expanded');
     if(span) span.textContent = '收起';
-  } else {
+  } else if(body.classList.contains('expanded')){
     body.classList.add('truncated'); body.classList.remove('expanded');
     if(span) span.textContent = '展开';
+  } else if(span){
+    // 有「展开」按钮但初始态没标 truncated（历史数据/异常渲染）→ 一律展开
+    body.classList.add('expanded');
+    span.textContent = '收起';
   }
+  updateCollapseBtn();
+}
+
+/* ---------- 悬浮收起钮：只有「已展开且高过一屏」才出现 ----------
+   内容跨越多屏后，卡片顶部的「收起」早已滚出视口；这颗钮固定在右下角，
+   随时可按，收起后把卡片带回视口顶部。 */
+function updateCollapseBtn(){
+  var btn = $('cardCollapse');
+  if(!btn) return;
+  var body = document.querySelector('#list .card .body.expanded');
+  if(!body){ btn.classList.remove('show'); btn._card = null; return; }
+  var card = body.closest('.card');
+  var vh = window.innerHeight;
+  var r = card.getBoundingClientRect();
+  // 卡片本身是否跨屏：高度超过一屏，或高度超过 1.4 屏但顶部已滚出
+  var tall = r.height > vh * 0.92 || (r.height > vh * 0.6 && r.top < -40);
+  // 完全滚出视口（上方或下方）→ 收起钮没有意义，藏起来
+  var visible = r.bottom > 70 && r.top < vh - 80;
+  if(tall && visible){ btn._card = card; btn.classList.add('show'); }
+  else { btn._card = null; btn.classList.remove('show'); }
 }
 
 /* ---------- 渲染：标签列表 ---------- */
@@ -2251,17 +2465,37 @@ function swipeThreshold(){
 }
 function clearSwipeInline(){
   var sb = $('sidebar'), mk = $('sidebarMask');
-  sb.style.transition = ''; sb.style.transform = '';
-  mk.style.opacity = ''; mk.style.pointerEvents = '';
+  sb.style.transition = ''; sb.style.transform = ''; sb.style.boxShadow = '';
+  mk.style.opacity = ''; mk.style.pointerEvents = ''; mk.style.transition = '';
 }
 function resetSwipe(){ clearSwipeInline(); }
+/* 景深进度：写 body 的 --sbp（0→1），由 CSS 让 .stream / .app-header 后缩 + 渐隐。
+   dragging=true 时挂 body.sb-dragging 关掉过渡（跟手）；
+   松手时先摘掉该 class、下一帧再改值，保证「页面缓缓退出」一定走动画而不是硬跳。 */
+function setDepth(p, dragging){
+  var b = document.body;
+  b.style.setProperty('--sbp', String(p));
+  if(dragging) b.classList.add('sb-dragging');
+  else b.classList.remove('sb-dragging');
+}
+function animateDepth(p){
+  var b = document.body;
+  b.classList.remove('sb-dragging');
+  requestAnimationFrame(function(){ b.style.setProperty('--sbp', String(p)); });
+}
 /* 三端唯一状态出口：手机抽屉与桌面 / Pad 常驻侧栏共用同一组状态类 */
 function setSidebar(open){
   clearSwipeInline();                       // 先清 inline，CSS 过渡才能生效（无跳变）
+  if(open) closeSearch();                   // 抽屉浮在搜索层下面，开着会被压住 → 先收起
   var sb = $('sidebar'), mk = $('sidebarMask');
   if(open){ sb.classList.add('open'); mk.classList.add('show'); }
   else    { sb.classList.remove('open'); mk.classList.remove('show'); }
-  if(window.innerWidth <= 820) $('appHeader').classList.toggle('hidden', open);
+  if(window.innerWidth <= 820){
+    $('appHeader').classList.toggle('hidden', open);
+    animateDepth(open ? 1 : 0);             // 页面后缩渐隐 / 复位
+  } else {
+    document.body.style.setProperty('--sbp', '0');   // 桌面侧栏常驻，没有景深
+  }
   updateFabVisibility();
 }
 function openSidebar(){ setSidebar(true); }
@@ -2318,10 +2552,13 @@ function handleTouchMove(e){
   }
   e.preventDefault();
   swipeState.currentX = dx;
-  sb.style.transition = 'none';
+  sb.style.transition = 'transform 0s, box-shadow .22s cubic-bezier(.2,0,0,1)';
   sb.style.transform = 'translateX(' + (-(1-progress)*100) + '%)';
+  sb.style.boxShadow = progress > 0 ? 'var(--drawer-shadow)' : '';   // 侧栏以「带阴影的纸」推入
+  mk.style.transition = 'none';
   mk.style.opacity = String(progress * 0.25);
   mk.style.pointerEvents = 'none';
+  setDepth(progress, true);                                   // 页面随手指后缩渐隐
 }
 function handleTouchEnd(e){
   if(!swipeState.tracking) return;
@@ -2525,12 +2762,34 @@ function bind(){
   $('navReview').onclick = function(){ view='all'; activeTag=null; updateNavState(); closeSidebarMobile(); openReview(this); };
   $('navTrash').onclick = function(){ view='trash'; activeTag=null; updateNavState(); closeSidebarMobile(); refresh(); };
 
-  // 搜索
+  // 搜索：顶栏图标与侧栏入口共用同一个浮层（2026-11-10 统一，详见 openSearch）
   var searchTimer;
-  $('search').oninput = function(e){ clearTimeout(searchTimer); var v = e.target.value; searchTimer = setTimeout(function(){ searchTerm = v.trim(); renderList(); }, 120); };
-
-  // 头部搜索按钮
-  $('headerSearch').onclick = function(){ $('search').focus(); if(window.innerWidth<=820) toggleSidebar(); };
+  $('headerSearch').onclick = function(e){ e.stopPropagation(); openSearch(this); };
+  $('searchBox').onclick = function(){ openSearch(this, true); };
+  $('searchInput').oninput = function(e){
+    var v = e.target.value;
+    updateSearchState(v);
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function(){ searchTerm = v.trim(); renderList(); updateSearchState(v); }, 120);
+  };
+  $('searchInput').onkeydown = function(e){
+    if(e.key === 'Escape'){ e.preventDefault(); closeSearch(); }
+  };
+  $('searchClear').onclick = function(){
+    $('searchInput').value = '';
+    updateSearchState('');
+    searchTerm = '';
+    renderList();
+    $('searchInput').focus();
+  };
+  // 点浮层以外的地方收起（但保留筛选结果），点卡片看内容不会把检索状态清掉
+  document.addEventListener('pointerdown', function(e){
+    var pop = $('searchPop');
+    if(!pop.classList.contains('open')) return;
+    if(pop.contains(e.target)) return;
+    if(e.target.closest && (e.target.closest('#headerSearch') || e.target.closest('#searchBox'))) return;
+    closeSearch();
+  }, true);
 
   // 全屏编辑器
   $('edImg').onclick = function(){ $('edImgInput').click(); };
@@ -2572,12 +2831,19 @@ function bind(){
       return;
     }
     var ae = document.activeElement;
+    // Ctrl/⌘ K：随处唤起搜索浮层（锚在顶栏图标）；输入框里也拦，避免浏览器抢焦点
+    if((e.ctrlKey||e.metaKey) && (e.key === 'k' || e.key === 'K')){
+      e.preventDefault();
+      openSearch($('headerSearch'));
+      return;
+    }
     if((e.ctrlKey||e.metaKey) && e.key==='Enter'){
       if(ae === $('cpInput')){ e.preventDefault(); submitComposer(); return; }
       if(ae === $('qiInput')){ e.preventDefault(); submitQuick(); return; }
       if(inlineCardId && ae && ae.classList.contains('il-input')){ e.preventDefault(); saveInline(); return; }
     }
     if(e.key==='Escape'){
+      if($('searchPop').classList.contains('open')){ e.preventDefault(); closeSearch(); return; }
       if(inlineCardId){ e.preventDefault(); closeInlineEditor(); return; }
       if($('quickInput').classList.contains('expanded')){ e.preventDefault(); collapseQuick(); return; }
       if($('sidebar').classList.contains('open')){ e.preventDefault(); closeSidebar(); return; }
@@ -2586,6 +2852,7 @@ function bind(){
   });
 
   // 卡片交互
+  var tapState = { id:null, t:0, pre:false };   // 单击/双击判定（见下方 click 分支）
   $('list').addEventListener('click', function(e){
     if(typeof cardSwipe !== 'undefined' && cardSwipe.fired){ cardSwipe.fired = false; return; }
     // 就地编辑态：面板内点击由 inline-editor 自己处理，别再触发卡片展开/编辑
@@ -2604,10 +2871,45 @@ function bind(){
       revealCardMenu(e.target.closest('.meta-menu'));
       return;
     }
-    // 点卡片本体：三端一律就地展开编辑；长 memo 的「展开」按钮仍可纯阅读
+    /* 点卡片本体（2026-11-10 作者改版）：单击 = 展开 / 收起；双击 = 进入就地编辑。
+       单击立即响应，不为了「等双击」挂 250ms 延迟——那种滞后每点一次都要付一次。
+       双击靠 340ms 内同一张卡片的第二次 click 判定，不用原生 dblclick：iOS Safari 的
+       双指/双击语义不可靠（会先被判定成缩放），touch 端只有 click 是稳的。
+       进编辑前把第一次点击造成的展开还原，避免关掉编辑器后卡片莫名停在展开态。 */
     var cardEl = e.target.closest('.card');
     if(!cardEl) return;
-    openInlineEditor(cardEl.dataset.id);
+    if(cardEl.classList.contains('editing')) return;
+    var bodyEl = cardEl.querySelector('.body');
+    var wasExpanded = bodyEl ? bodyEl.classList.contains('expanded') : false;
+    var now = Date.now();
+    if(tapState.id === cardEl.dataset.id && now - tapState.t < 340){
+      var id = cardEl.dataset.id, pre = tapState.pre;
+      tapState.id = null; tapState.t = 0;
+      if(bodyEl && bodyEl.classList.contains('expanded') !== pre) toggleExpand(cardEl);
+      openInlineEditor(id);
+      return;
+    }
+    tapState.id = cardEl.dataset.id; tapState.t = now; tapState.pre = wasExpanded;
+    toggleExpand(cardEl);
+  });
+
+  // 悬浮收起钮：收起 → 把卡片带回视口顶部
+  $('cardCollapse').addEventListener('click', function(e){
+    e.stopPropagation();
+    var card = this._card || document.querySelector('#list .card .body.expanded');
+    if(card && card.closest) card = card.closest('.card');
+    if(!card) return;
+    toggleExpand(card);
+    var st = $('stream');
+    var top = card.getBoundingClientRect().top + st.scrollTop - 76;
+    try{ st.scrollTo({ top: Math.max(0, top), behavior: 'smooth' }); }
+    catch(err){ st.scrollTop = Math.max(0, top); }
+  });
+  // 展开/收起改变高度，滚动时判断这颗钮该不该在
+  $('stream').addEventListener('scroll', updateCollapseBtn, { passive: true });
+  window.addEventListener('resize', function(){
+    updateCollapseBtn();
+    if($('searchPop').classList.contains('open')) placeSearchPop($('searchPop')._trigger);
   });
 
   // 卡片滑动手势：主页右滑置顶 / 取消置顶、左滑删除；回收站右滑恢复 / 左滑彻底删除。
@@ -2809,6 +3111,8 @@ function registerSW(){
 (async function init(){
   bind();
   updateSidebarToggle();   // 桌面开关图标初始化（‹ 收起）
+  updateSearchState();     // 搜索入口/提示的初始态（有词才显示关键词）
+  document.body.style.setProperty('--sbp', '0');
   registerSW();
   try{ await openDB(); }catch(e){ alert('无法打开本地数据库：'+e.message); return; }
   await refresh();
