@@ -1,8 +1,8 @@
 /* Leaf. Service Worker — 离线缓存（PWA）
  * 独立文件，避免 blob: URL 注册被 Firefox / Chrome 拒绝。
  */
-var CACHE = 'leaf-v1';
-var PRECACHE = ['./', './index.html', './leaf-icon.png', './manifest.webmanifest'];
+var CACHE = 'leaf-v2';
+var PRECACHE = ['./', './index.html', './leaf-icon.png?v=2', './manifest.webmanifest'];
 
 self.addEventListener('install', function(e){
   e.waitUntil(
