@@ -285,12 +285,14 @@
      左滑 face 左移露右侧 → 文案在 right。写反就会被 card-face 完全盖住（回收站旧 bug）。
      z-index:1 保证伪元素不被 card-face 的 will-change/transform 层叠上下文压住。 */
   .card.tint-pin::before{ content:'置顶'; position:absolute; left:20px; top:50%; transform:translateY(-50%); z-index:1; color:var(--cyan); font-weight:600; font-size:14px; letter-spacing:1px; }
+  .card.pinned.tint-pin::before{ content:'取消置顶'; }
   .card.tint-del::before{ content:'删除'; position:absolute; right:20px; top:50%; transform:translateY(-50%); z-index:1; color:#c0392b; font-weight:600; font-size:14px; letter-spacing:1px; }
-  /* 回收站滑动：右滑=删除（提示在露出的左侧）/ 左滑=恢复（提示在露出的右侧） */
+  /* 回收站与主页保持「右滑建设性、左滑破坏性」的方向语义：
+     右滑=恢复（露出左侧）/ 左滑=彻底删除（露出右侧）。 */
   .card.trash.tint-purge{ background:#fbeaea; }
   .card.trash.tint-restore{ background:var(--cyan-soft); }
-  .card.trash.tint-purge::before{ content:'删除'; position:absolute; left:20px; top:50%; transform:translateY(-50%); z-index:1; color:#c0392b; font-weight:600; font-size:14px; letter-spacing:1px; }
-  .card.trash.tint-restore::before{ content:'恢复'; position:absolute; right:20px; top:50%; transform:translateY(-50%); z-index:1; color:var(--cyan); font-weight:600; font-size:14px; letter-spacing:1px; }
+  .card.trash.tint-purge::before{ content:'彻底删除'; position:absolute; right:20px; top:50%; transform:translateY(-50%); z-index:1; color:#c0392b; font-weight:600; font-size:14px; letter-spacing:1px; }
+  .card.trash.tint-restore::before{ content:'恢复'; position:absolute; left:20px; top:50%; transform:translateY(-50%); z-index:1; color:var(--cyan); font-weight:600; font-size:14px; letter-spacing:1px; }
   .card .meta{
     display:flex; justify-content:space-between; align-items:center;
     font-size:11.5px; color:var(--muted); margin-bottom:8px;
@@ -1208,7 +1210,7 @@
         <li>那我们要做什么？先想个问题：<b>你有没有发现，你现在好像越来越不爱独立思考了？</b></li>
         <li>给你一个画面：当老板发来一长串 PPT，你会怎么做？是不是一键扔给 AI，让它帮你总结，还要顺带加一句“总结成你看得懂的样子”？</li>
         <li>这就是现状：我们越来越多的人在熟练地使用 AI。但熟练的方式，却是<b>外包大脑</b>——让 AI 成为思考的工具，而我们的大脑只负责验收成果。这样会让我们越来越懒。</li>
-        <li>就像我在 flomo 记录的这条 memo 一样：<br><img src="https://api2.mubu.com/v3/document_image/71d3964c-a29e-4462-b43b-40d505c13866.jpeg" alt="flomo 里记录的一条关于外包大脑的 memo" loading="lazy" style="max-width:100%;border-radius:10px;margin:8px 0"></li>
+        <li>就像我在 flomo 记录的这条 memo 一样：<br><img src="about-flomo-memo.jpeg" alt="flomo 里记录的一条关于外包大脑的 memo" loading="lazy" style="max-width:100%;border-radius:10px;margin:8px 0"></li>
         <li>是啊，<b>正因为在这个 AI 时代，我们每个人的思想才格外重要。</b></li>
         <li>因为 AI 读过全世界的书，却缺少属于你独自的那一点上下文——这也是我们选择做一款无 AI 的「思维工具」的原因。</li>
         <li>当然，我不是什么非常排斥 AI 的人，就连这整个产品，都是用 WorkBuddy 的项目功能开发出来的。</li>
@@ -2534,8 +2536,8 @@ function bind(){
     openInlineEditor(cardEl.dataset.id);
   });
 
-  // 卡片滑动手势：手机右滑置顶 / 左滑删除；回收站右滑彻底删除 / 左滑恢复。
-  // touch 与桌面鼠标拖动共用同一套状态、方向判断与提示文案，三端表现一致。
+  // 卡片滑动手势：主页右滑置顶 / 取消置顶、左滑删除；回收站右滑恢复 / 左滑彻底删除。
+  // 三端统一为「右滑建设性、左滑破坏性」；touch 与桌面鼠标拖动共用同一套状态、方向与文案。
   var cardSwipe = { el:null, face:null, startX:0, startY:0, dx:0, tracking:false, fired:false, lpTimer:null };
   function swipeStart(x, y, target, edgeGuard){
     // 每次新手势先清掉上一次可能残留的"吞点击"标记，否则第一次点按钮会被误吞
@@ -2563,8 +2565,8 @@ function bind(){
     cardSwipe.face.classList.add('swiping');
     cardSwipe.face.style.transform = 'translateX('+cardSwipe.dx+'px)';
     if(view === 'trash'){
-      cardSwipe.el.classList.toggle('tint-purge', cardSwipe.dx > 0);    // 右滑=删除（提示在左侧）
-      cardSwipe.el.classList.toggle('tint-restore', cardSwipe.dx < 0);  // 左滑=恢复（提示在右侧）
+      cardSwipe.el.classList.toggle('tint-restore', cardSwipe.dx > 0); // 右滑=恢复（提示在左侧）
+      cardSwipe.el.classList.toggle('tint-purge', cardSwipe.dx < 0);   // 左滑=彻底删除（提示在右侧）
     } else {
       cardSwipe.el.classList.toggle('tint-pin', cardSwipe.dx > 0);
       cardSwipe.el.classList.toggle('tint-del', cardSwipe.dx < 0);
@@ -2582,9 +2584,9 @@ function bind(){
       cardSwipe.fired = true;                              // 吞掉随后可能的 click
       listSwipeReset();
       if(view === 'trash'){
-        if(dx > 0) delCard(id, true); else restoreCard(id);  // 右滑=彻底删除，左滑=恢复
+        if(dx > 0) restoreCard(id); else delCard(id, true);  // 右滑=恢复，左滑=彻底删除
       } else {
-        if(dx > 0) togglePin(id); else delCard(id, false);   // 右滑=置顶，左滑=软删进回收站
+        if(dx > 0) togglePin(id); else delCard(id, false);   // 右滑=置顶/取消置顶，左滑=软删进回收站
       }
     } else {
       if(Math.abs(dx) > 8) cardSwipe.fired = true;         // 拖动过则吞点击
