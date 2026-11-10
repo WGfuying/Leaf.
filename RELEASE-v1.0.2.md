@@ -25,7 +25,13 @@
 - 卡片之读法：单击展开、双击进入编辑；长文展开后若跨越多屏，右下角浮出一颗收起钮，一点便收拢并带你回到卡片顶部
 - 抽屉之景深：左缘滑动时页面缓缓后缩、渐隐，侧栏带着阴影推入，像一页纸从边上压过来
 - 三点之收回：再点一次即收起，不再只开不合
-- 双引擎之证：Chromium 与 WebKit 交叉验证，桌面、Pad 与手机的核心路径均无脚本报错
+- 滚动条之隐：默认藏起来，滑动时轻轻现身，停手九百毫秒后按同一段 240ms 淡出；卡片流、侧栏、设置、关于、回顾、编辑预览六处共用同一颗滑块，显隐既不占位也不推挤任何内容
+- 侧栏之搜索：那一行不再是「弹窗开关」，原地就是输入框——键入即筛，回车收抽屉看结果，不再跳到另一个窗口里打字
+- 侧栏之开关：两端统一为三条杠，开与合是同一个按钮、同一个位置，不再左右翻箭头让人以为它换了边
+- 收起之稳重：连点悬浮收起钮不再误触展开或编辑，侧栏开关也加了 260ms 的呼吸，不再一点就抖
+- 浮窗之空白：手机新建面板点空白处即收，不必再绕回「取消」
+- 景深之连续：模糊随手指一路生长（0 → 2.4px），与位移、透明度同一条进度线，不是滑到底才突然糊上一层
+- 双引擎之证：Chromium 与 Gecko（Firefox）交叉验证，桌面、Pad 与手机的核心路径均无脚本报错
 
 *「一叶落地，一念生根。」*
 
@@ -60,7 +66,13 @@ It's no longer just pretty — it finally works: the cracks are mended, the gest
 - How cards read: a single click unfolds, a double click opens the editor; when an unfolded note runs past a screen, a floating button rises at the lower right to fold it and bring you back to its top
 - The drawer's depth: dragging from the left edge makes the page recede and fade while the sidebar slides in with a shadow, like a sheet pressed in from the side
 - The three dots release: tap them again and the actions fold away
-- Proven on two engines: Chromium and WebKit cross-checked, with no script errors across the core desktop, tablet and phone paths
+- A scrollbar that hides: invisible at rest, it surfaces while you scroll and withdraws on the same 240ms curve after nine hundred milliseconds of stillness — one shared thumb for the stream, the sidebar, Settings, About, Daily Leaf and the editor preview, and showing it never shifts a single line
+- Search in the sidebar: that row is an input again rather than a door to another window — type where you stand, press Enter and the drawer steps aside for the results
+- One toggle, both ends: three lines on desktop as on the phone, the same button in the same place whether the leaf is open or folded, with no arrows flipping sides
+- A steadier fold: rapid taps on the floating fold button no longer fall through into unfold or edit, and the sidebar switch takes a 260ms breath before it answers again
+- A tap on blank space: the phone's writing dock now closes when you touch anywhere outside it, so Cancel is no longer the only way out
+- Depth that keeps up: the blur grows with your finger (0 to 2.4px) on the very same progress line as the shift and the fade, instead of arriving in one sudden layer at the end
+- Proven on two engines: Chromium and Gecko (Firefox) cross-checked, with no script errors across the core desktop, tablet and phone paths
 
 *"A falling leaf, a growing thought."*
 
