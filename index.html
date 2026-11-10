@@ -424,7 +424,16 @@
   .md ul.task-list li.task input{ margin-top:.4em }
 
   /* ---------- 弹窗 ---------- */
-  .modal-mask{ position:fixed; top:0;right:0;bottom:0;left:0; background:rgba(0,0,0,.30); z-index:210; display:none; align-items:stretch; justify-content:flex-end }
+  /* 方向跟随触发元素：面板不再写死从右侧浮现，而是按触发元素在视口中最靠近的
+     边缘（左/右/上/下）决定锚点与滑入方向（见 JS openLayer → anchorFor）。
+     · 侧栏里的设置 / 每日一叶 / 关于 触发点都在左侧 → 从左侧浮现；
+     · 任何落在右侧（或上 / 下）的触发点，会据此从对应侧浮现；
+       base 只给中性对齐，具体方向由 .anchor-* 覆盖。 */
+  .modal-mask{ position:fixed; top:0;right:0;bottom:0;left:0; background:rgba(0,0,0,.30); z-index:210; display:none; align-items:stretch; justify-content:center }
+  .modal-mask.anchor-left{ justify-content:flex-start }
+  .modal-mask.anchor-right{ justify-content:flex-end }
+  .modal-mask.anchor-top{ align-items:flex-start; justify-content:center }
+  .modal-mask.anchor-bottom{ align-items:flex-end; justify-content:center }
   .modal-mask.open{ display:flex }
   /* MD1 dialog：24dp 最高层 → 单层 --elev-4；宽 ≤560dp 上限，取 420px；
      手机 92% 宽接近 full-screen dialog 的小屏适配；flex 列 + sticky 头尾，
@@ -508,6 +517,20 @@
     color:var(--ink); flex-shrink:0;
   }
   .menu-toggle:active{ background:var(--paper-2) }
+
+  /* 桌面端侧栏收起 / 展开开关：默认隐藏，仅桌面（≥821px）显示；手机用汉堡抽屉。
+     它和汉堡占用同一左侧槽位，二者互斥显隐。 */
+  #sidebarToggle{ display:none }
+  #sidebarToggle .chev{ font-size:22px; line-height:1; font-weight:700; transform:translateY(-1px) }
+  @media (min-width:821px){
+    #sidebarToggle{ display:flex }
+    /* 收起态：侧栏宽度归零、边框 / 内边距收起、内容裁掉，主区（.stream, flex:1）自动占满。
+       宽度走过渡，避免硬跳变；仅桌面生效，手机沿用抽屉 transform 逻辑不受影响。 */
+    .app.sb-collapsed .sidebar{
+      width:0; flex-basis:0; min-width:0; border-right:none;
+      padding-left:0; padding-right:0; overflow:hidden;
+    }
+  }
 
   @media (max-width:820px){
     .app-header{ padding:0 12px; position:fixed }
@@ -767,7 +790,9 @@
   .modal{ background:var(--surface-2); box-shadow:var(--elev-4) }
   .toast{ box-shadow:var(--elev-3) }
   /* 只在桌面给常驻侧栏 elevation；移动端抽屉自己的 --elev-3 不被覆盖 */
-  @media (min-width:821px){ .sidebar{ box-shadow:var(--elev-1) } }
+  @media (min-width:821px){
+    .sidebar{ box-shadow:var(--elev-1); transition:width var(--d2) var(--ease-std), flex-basis var(--d2) var(--ease-std) }
+  }
   .app-header{ background:var(--surface) }
 
   /* 统一的过渡节奏：微交互 d1/standard，按压回弹 spring（轻微过冲，不是乱弹） */
@@ -808,27 +833,40 @@
   }
   /* ===== MD1 弹窗规格 · 统一动效（三端完全一致） =====
      设置 / 关于 / 回顾 三个面板全部走同一组规则：
-       方向  translateX(100%) → 0（从右侧浮现），退场严格对称；
+       方向  跟随触发元素：openLayer 计算触发点最近视口边缘 → 写 .anchor-left/right/top/bottom，
+             面板从那一侧滑入（左/右满高贴边，上/下满宽贴边），退场严格对称；
        曲线  --ease-sheet:cubic-bezier(.16,.84,.28,1)（非线性、快起慢落、无过冲）；
        时长  --d3:.38s 入场 / --d2:.24s 退场 / --d2 遮罩淡入淡出；
        遮罩  同一 rgba(0,0,0,.30) scrim 覆盖全部内容；
        降级  prefers-reduced-motion 下由 closeLayer() 立即关闭，不播动画。
      三端差异 ONLY 面板宽度（手机 92% / 平板与桌面 min(420px,92%)），
      动画方向、曲线、时长、遮罩节奏、状态类名在三端逐字相同。 */
-  @keyframes leafPanelIn{ from{ transform:translateX(100%); opacity:.55 } to{ transform:translateX(0); opacity:1 } }
-  @keyframes leafPanelOut{ from{ transform:translateX(0); opacity:1 } to{ transform:translateX(100%); opacity:.5 } }
+  /* ===== 方向跟随：四套滑入 / 滑出关键帧 =====
+     入场 backwards、退场 forwards（绝不用 both，避免残留 transform 创建
+     containing block / 层叠上下文，干扰内部定位，详见上轮「弹窗从另一边冲入」根因）。
+       · L/R：横向抽屉，面板满高、贴左 / 贴右；
+       · T/B：竖向抽屉（sheet），面板满宽、贴顶 / 贴底，宽高见 .anchor-top/.anchor-bottom 限定。
+     方向由 openLayer 计算触发点最近视口边缘后写入 .anchor-* 决定。 */
+  @keyframes leafPanelInL{ from{ transform:translateX(-100%); opacity:.55 } to{ transform:translateX(0); opacity:1 } }
+  @keyframes leafPanelOutL{ from{ transform:translateX(0); opacity:1 } to{ transform:translateX(-100%); opacity:.5 } }
+  @keyframes leafPanelInR{ from{ transform:translateX(100%); opacity:.55 } to{ transform:translateX(0); opacity:1 } }
+  @keyframes leafPanelOutR{ from{ transform:translateX(0); opacity:1 } to{ transform:translateX(100%); opacity:.5 } }
+  @keyframes leafPanelInT{ from{ transform:translateY(-100%); opacity:.55 } to{ transform:translateY(0); opacity:1 } }
+  @keyframes leafPanelOutT{ from{ transform:translateY(0); opacity:1 } to{ transform:translateY(-100%); opacity:.5 } }
+  @keyframes leafPanelInB{ from{ transform:translateY(100%); opacity:.55 } to{ transform:translateY(0); opacity:1 } }
+  @keyframes leafPanelOutB{ from{ transform:translateY(0); opacity:1 } to{ transform:translateY(100%); opacity:.5 } }
   @keyframes leafMaskFadeIn{ from{ opacity:0 } to{ opacity:1 } }
   @keyframes leafMaskFadeOut{ from{ opacity:1 } to{ opacity:0 } }
   @keyframes yiyanOut{ from{ opacity:1 } to{ opacity:0 } }
-  /* 方向常量：面板锚在视口右侧，入场 translateX(100%)→0、退场 0→translateX(100%)，
-     三端逐字一致。fill-mode 用 backwards / forwards 而不是 both：
-       · both 会让动画结束后 .modal 仍保留一个非 none 的 transform
-         （Chromium 实测 matrix(1,0,0,1,0,0)，WebKit 桌面实测停在 +420px），
-         它会创建 containing block / 层叠上下文，干扰内部定位；
-       · 退场终帧的 translateX(100%) 若残留，下次打开 backwards 又把面板
-         放回视口右外侧，观感就是「弹窗从另一边（屏幕外）冲进来」。 */
-  .modal-mask.open > .modal{ animation:leafPanelIn var(--d3) var(--ease-sheet) backwards }
-  .modal-mask.closing > .modal{ animation:leafPanelOut var(--d2) var(--ease-out) forwards }
+  /* 入场：按锚点选方向；退场：与入场严格对称。曲线随方向一致（sheet 用 --ease-sheet，侧栏同款）。 */
+  .modal-mask.anchor-left.open > .modal{ animation:leafPanelInL var(--d3) var(--ease-sheet) backwards }
+  .modal-mask.anchor-right.open > .modal{ animation:leafPanelInR var(--d3) var(--ease-sheet) backwards }
+  .modal-mask.anchor-top.open > .modal{ animation:leafPanelInT var(--d3) var(--ease-sheet) backwards }
+  .modal-mask.anchor-bottom.open > .modal{ animation:leafPanelInB var(--d3) var(--ease-sheet) backwards }
+  .modal-mask.anchor-left.closing > .modal{ animation:leafPanelOutL var(--d2) var(--ease-out) forwards }
+  .modal-mask.anchor-right.closing > .modal{ animation:leafPanelOutR var(--d2) var(--ease-out) forwards }
+  .modal-mask.anchor-top.closing > .modal{ animation:leafPanelOutT var(--d2) var(--ease-out) forwards }
+  .modal-mask.anchor-bottom.closing > .modal{ animation:leafPanelOutB var(--d2) var(--ease-out) forwards }
   .modal-mask.open{ animation:leafMaskFadeIn var(--d2) var(--ease-std) backwards }
   .modal-mask.closing{ animation:leafMaskFadeOut var(--d2) var(--ease-std) forwards; pointer-events:none }
   /* 退场动画进行中撤销关闭：直接恢复当前位置，不再从屏幕外重播入场。
@@ -848,6 +886,13 @@
   @media (min-width:821px){
     .modal{ width:420px; max-width:420px }
   }
+  /* 触发点在视口上 / 下边缘 → 面板改为满宽竖向抽屉（sheet）：
+     宽 100%、高随内容但封顶 88vh（env 安全区），绝不超出视口被裁切；
+     三段式 flex 在 height:auto + max-height 下依旧让 .modal-body 滚动。
+      specificity（3 类）高于上方 .modal 与 @media .modal{width:420px}（1 类），故覆盖生效。 */
+  .modal-mask.anchor-top > .modal, .modal-mask.anchor-bottom > .modal{
+    width:100%; max-width:none; height:auto; max-height:calc(88vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+  }
   /* iOS 12：flex 容器 gap 不支持，编辑栏新容器不用 gap，无需额外兜底 */
 </style>
 </head>
@@ -857,6 +902,10 @@
 <div class="app-header" id="appHeader">
   <button class="header-hamburger menu-toggle" id="menuToggle" aria-label="菜单">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <!-- 桌面端侧栏收起 / 展开开关：仅桌面可见（手机用左侧汉堡抽屉）。图标随状态翻转 -->
+  <button class="header-hamburger" id="sidebarToggle" aria-label="收起侧栏" title="收起侧栏">
+    <span class="chev" aria-hidden="true">‹</span>
   </button>
   <div class="header-logo" id="headerLogo">leaf<span class="dot">.</span></div>
   <div class="header-spacer"></div>
@@ -868,7 +917,7 @@
 <div class="sidebar-mask" id="sidebarMask"></div>
 <div class="swipe-zone" id="swipeZone"></div>
 
-<div class="app">
+<div class="app" id="app">
   <aside class="sidebar" id="sidebar">
     <!-- 侧栏 header：纯 logo -->
     <div class="sidebar-header">
@@ -1860,7 +1909,7 @@ function showRandomReview(){
     + (c.tags.length ? ' · '+c.tags.map(function(t){ return '#'+escapeHtml(t); }).join(' ') : '');
   $('reviewBody').innerHTML = renderContent(c.content);
 }
-function openReview(){ if(reviewPool().length===0){ toast('还没有可回顾的 MEMO'); return; } showRandomReview(); openLayer('reviewMask'); }
+function openReview(trigger){ if(reviewPool().length===0){ toast('还没有可回顾的 MEMO'); return; } showRandomReview(); openLayer('reviewMask', trigger); }
 function closeReview(){ closeLayer('reviewMask'); }
 
 /* ---------- 一言彩蛋 ---------- */
@@ -2088,6 +2137,22 @@ function openSidebar(){ setSidebar(true); }
 function closeSidebar(){ setSidebar(false); }
 function toggleSidebar(){ setSidebar(!$('sidebar').classList.contains('open')); }
 function closeSidebarMobile(){ if(window.innerWidth <= 820) setSidebar(false); }
+/* 桌面端侧栏收起 / 展开（仅 ≥821px 生效；手机沿用上方抽屉 setSidebar）。
+   折叠 = 侧栏宽度归零、主区占满；开关图标随状态翻转（‹ 收起 / › 展开）。 */
+var sbCollapsed = false;
+function setSidebarCollapsed(c){
+  sbCollapsed = !!c;
+  var app = document.getElementById('app');
+  if(app) app.classList.toggle('sb-collapsed', sbCollapsed);
+  updateSidebarToggle();
+}
+function toggleSidebarCollapsed(){ setSidebarCollapsed(!sbCollapsed); }
+function updateSidebarToggle(){
+  var btn = document.getElementById('sidebarToggle'); if(!btn) return;
+  var chev = btn.querySelector('.chev'); if(chev) chev.textContent = sbCollapsed ? '›' : '‹';
+  btn.setAttribute('aria-label', sbCollapsed ? '展开侧栏' : '收起侧栏');
+  btn.setAttribute('title', sbCollapsed ? '展开侧栏' : '收起侧栏');
+}
 
 function handleTouchStart(e){
   if(window.innerWidth > 820) return;       // 桌面 / Pad：侧栏常驻，不接管手势
@@ -2159,7 +2224,34 @@ function resetLayerScroll(m){
   if(body) body.scrollTop = 0;
   if(m.scrollTop) m.scrollTop = 0;
 }
-function openLayer(id){
+/* 方向跟随：取触发元素中心，先判「横向侧边」再判「上下」。
+   用户语义是「侧边」(lateral)：位于屏幕左 / 右区域的触发点 → 左 / 右抽屉；
+   只有落在中间竖带（既不在左也不在右）的触发点，才按上 / 下判定（顶 / 底 sheet）。
+   这样左 / 右侧栏里的所有入口（设置 / 每日一叶 / 关于，含底部 footer 项）统一从左侧浮现，
+   不会出现「同在侧栏、一个从左一个从底」的不一致。
+   getBoundingClientRect 是「相对视口」坐标，已自动计入任何祖先滚动容器的偏移，
+   触发点哪怕在滚动容器内也准；贴边时面板恰锚在那条边 → 永不溢出被裁切。 */
+function anchorFor(trigger){
+  if(!trigger || !trigger.getBoundingClientRect) return 'right';  // 兜底：默认右侧
+  var r = trigger.getBoundingClientRect();
+  if(!r.width && !r.height) return 'right';
+  var cx = r.left + r.width/2, cy = r.top + r.height/2;
+  var W = window.innerWidth || document.documentElement.clientWidth;
+  var H = window.innerHeight || document.documentElement.clientHeight;
+  var leftZone = W * 0.4, rightZone = W * 0.6;   // 左 / 右各 40%，中间 20% 走上下判定
+  if(cx <= leftZone) return 'left';
+  if(cx >= rightZone) return 'right';
+  return (cy <= H / 2) ? 'top' : 'bottom';        // 中间竖带：上半屏→顶，下半屏→底
+}
+function applyAnchor(m, trigger){
+  // 仅 .modal-mask 走方向跟随；yiyan 等居中彩蛋不受 anchor-* 影响
+  if(!m.classList.contains('modal-mask')) return;
+  var a = anchorFor(trigger);
+  m.classList.remove('anchor-left','anchor-right','anchor-top','anchor-bottom');
+  m.classList.add('anchor-' + a);
+  m.dataset.anchor = a;
+}
+function openLayer(id, trigger){
   var m = $(id);
   if(!m) return;
   if(m._closeTimer){ clearTimeout(m._closeTimer); m._closeTimer = 0; }  // 撤销待执行的延迟关闭
@@ -2170,8 +2262,9 @@ function openLayer(id){
   }
   var reopening = m.classList.contains('closing');      // 退场动画中撤销关闭
   m.classList.remove('closing');
-  if(reopening) m.classList.add('reop');               // 就地恢复，不再从视口右外侧冲入
+  if(reopening) m.classList.add('reop');               // 就地恢复，不再从视口外冲入
   else m.classList.remove('reop');
+  applyAnchor(m, trigger);                              // 按触发点定方向
   m.classList.add('open');
   resetLayerScroll(m);
 }
@@ -2193,7 +2286,7 @@ function closeTopLayer(){
   }
   return false;
 }
-function openSettings(){ openLayer('settingsMask'); }
+function openSettings(trigger){ openLayer('settingsMask', trigger); }
 function closeSettings(){ closeLayer('settingsMask'); }
 
 /* ---------- 事件绑定 ---------- */
@@ -2284,10 +2377,12 @@ function bind(){
 
   // 汉堡菜单
   $('menuToggle').onclick = function(){ if(logoLongPressed){ logoLongPressed = false; return; } toggleSidebar(); };
+  // 桌面端侧栏收起 / 展开开关（仅桌面可见；手机不显示，由汉堡抽屉负责）
+  $('sidebarToggle').onclick = function(){ toggleSidebarCollapsed(); };
 
   // 侧栏导航（正确管理 active 状态）
   $('navAll').onclick = function(){ view='all'; activeTag=null; updateNavState(); closeSidebarMobile(); refresh(); };
-  $('navReview').onclick = function(){ view='all'; activeTag=null; updateNavState(); closeSidebarMobile(); openReview(); };
+  $('navReview').onclick = function(){ view='all'; activeTag=null; updateNavState(); closeSidebarMobile(); openReview(this); };
   $('navTrash').onclick = function(){ view='trash'; activeTag=null; updateNavState(); closeSidebarMobile(); refresh(); };
 
   // 搜索
@@ -2491,10 +2586,10 @@ function bind(){
   $('themeLight').onclick = function(){ setTheme('light'); };
   $('themeDark').onclick = function(){ setTheme('dark'); };
 
-  // 设置弹窗（从侧栏底部触发）
-  $('sideSettingsBtn').onclick = function(){ openSettings(); closeSidebarMobile(); };
-  // 关于弹窗（从侧栏底部版本行触发）
-  $('sideAboutBtn').onclick = function(){ openLayer('aboutMask'); closeSidebarMobile(); };
+  // 设置弹窗（从侧栏底部触发 → 方向跟随：左侧）
+  $('sideSettingsBtn').onclick = function(){ openSettings(this); closeSidebarMobile(); };
+  // 关于弹窗（从侧栏底部版本行触发 → 方向跟随：左侧；设置内「关于」触发则在右侧面板内 → 右侧）
+  $('sideAboutBtn').onclick = function(){ openLayer('aboutMask', this); closeSidebarMobile(); };
   $('settingsClose').onclick = function(){ closeSettings(); };
   $('settingsMask').onclick = function(e){ if(e.target===$('settingsMask')) closeSettings(); };
   $('setPdf').onclick = function(){ exportPDF(); closeSettings(); };
@@ -2504,7 +2599,7 @@ function bind(){
   $('setMdExport').onclick = function(){ exportMarkdown(); closeSettings(); };
   $('setImport').onclick = function(){ var inp = document.createElement('input'); inp.type='file'; inp.accept='.json,application/json'; inp.onchange = function(){ if(inp.files[0]) importJSON(inp.files[0]); }; inp.click(); };
   $('setMdImport').onclick = function(){ var inp = document.createElement('input'); inp.type='file'; inp.accept='.md,text/markdown'; inp.onchange = function(){ if(inp.files[0]) importMarkdown(inp.files[0]); }; inp.click(); };
-  $('setAbout').onclick = function(){ openLayer('aboutMask'); };
+  $('setAbout').onclick = function(){ openLayer('aboutMask', this); };
 
   // 关于页
   $('aboutClose').onclick = function(){ closeLayer('aboutMask'); };
@@ -2577,6 +2672,7 @@ function registerSW(){
 /* ---------- 启动 ---------- */
 (async function init(){
   bind();
+  updateSidebarToggle();   // 桌面开关图标初始化（‹ 收起）
   registerSW();
   try{ await openDB(); }catch(e){ alert('无法打开本地数据库：'+e.message); return; }
   await refresh();
