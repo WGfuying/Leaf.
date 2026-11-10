@@ -38,7 +38,7 @@
     /* 非线性动效：standard 状态 / emphasized 入场 / 轻微回弹（作者要求减弱幅度） */
     --ease-std:cubic-bezier(.2,0,0,1);
     --ease-emp:cubic-bezier(.2,0,0,1);
-    --ease-out:cubic-bezier(.3,0,.8,.15);
+    --ease-out:cubic-bezier(.3,0,.8,1);   /* 单调减速；原 .15 会让退场末段暴冲回拉 */
     --ease-spring:cubic-bezier(.22,1.06,.36,1);   /* 过冲由 1.4 降到 1.06，不再过度 */
     --ease-sheet:cubic-bezier(.16,.84,.28,1);      /* 底部弹层：快起慢落、无过冲 */
     --d1:.13s; --d2:.24s; --d3:.38s; --d4:.52s;
@@ -432,7 +432,7 @@
   .modal{ background:var(--paper); border-radius:0; padding:24px 26px;
           width:92%; max-width:420px; height:100%; max-height:100%; margin:0;
           box-shadow:var(--elev-4); display:flex; flex-direction:column;
-          overflow-y:auto; -webkit-overflow-scrolling:touch }
+          overflow:hidden }   /* 自身不滚：滚动只交给 .modal-body */
   .modal h2{ font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; color:var(--cyan); margin-bottom:4px; font-size:19px }
   .modal p{ font-size:13.5px; color:var(--ink); margin:.4em 0 }
   .modal .row{ display:flex; gap:10px; margin-top:18px; justify-content:flex-end }
@@ -440,11 +440,22 @@
   .modal button.primary{ background:var(--cyan); color:var(--paper); border-color:var(--cyan) }
 
   /* 设置弹窗 */
-  .settings-modal{ width:92%; max-width:420px; max-height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column }
+  .settings-modal{ width:92%; max-width:420px; max-height:100%; display:flex; flex-direction:column }
   .settings-modal > h2{ flex-shrink:0 }
-  .settings-modal > .settings-group{ flex-shrink:0 }
-  .settings-modal > .settings-divider{ flex-shrink:0 }
+  .settings-modal .settings-group{ flex-shrink:0 }
+  .settings-modal .settings-divider{ flex-shrink:0 }
   .settings-modal > .row{ flex-shrink:0; margin-top:14px }
+
+  /* MD1「滚动时标题/动作固定」的正确实现：三段式 flex。
+     头 h2 / 尾 .row 是 flex:0 0 auto 的固定段，不参与滚动、不需要 sticky、
+     不需要 z-index，也不需要不透明背景去盖住内容；只有中间 .modal-body 滚动。
+     旧实现让 .modal 自己既是 flex 列又是滚动容器，h2 用 position:sticky;top:0;
+     z-index:1 + 不透明背景，滚动后内容从标题下方穿过被遮成残片，
+     标题看起来「一直悬浮在页面上方」，下方还会出现大片空白。 */
+  .modal > .modal-body{
+    flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+  }
   .settings-group{ margin:14px 0 }
   .settings-group-title{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; padding-left:2px }
   .settings-item{
@@ -479,8 +490,8 @@
 
   /* ---------- 一言彩蛋 ---------- */
   .yiyan-mask{ position:fixed; top:0;right:0;bottom:0;left:0; z-index:230; display:none; align-items:center; justify-content:center; background:rgba(255,255,255,0.45); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); cursor:pointer; padding:8vw }
-  .yiyan-mask.open{ display:flex; animation:yiyanIn var(--d3) var(--ease-emp) both }
-  .yiyan-mask.closing{ display:flex; animation:yiyanOut var(--d2) var(--ease-out) both }
+  .yiyan-mask.open{ display:flex; animation:yiyanIn var(--d3) var(--ease-emp) backwards }
+  .yiyan-mask.closing{ display:flex; animation:yiyanOut var(--d2) var(--ease-out) forwards }
   .yiyan-text{ font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; font-size:clamp(18px,4.2vw,27px); color:var(--cyan); text-align:center; line-height:2.1; max-width:760px; text-shadow:0 1px 0 rgba(255,255,255,0.4); white-space:pre-wrap; word-break:break-word }
   .yiyan-text.empty{ font-size:clamp(40px,12vw,90px); line-height:1 }
   @keyframes yiyanIn{ from{ opacity:0; transform:scale(.97) } to{ opacity:1; transform:scale(1) } }
@@ -776,7 +787,6 @@
     from{ opacity:0; transform:translateY(10px) scale(.985) }
     to{ opacity:1; transform:none }
   }
-  .modal-mask.open .modal{ animation:leafPanelIn var(--d3) var(--ease-sheet) both }
   @keyframes leafToastIn{
     from{ opacity:0; transform:translate(-50%, 8px) }
     to{ opacity:1; transform:translate(-50%, 0) }
@@ -810,19 +820,28 @@
   @keyframes leafMaskFadeIn{ from{ opacity:0 } to{ opacity:1 } }
   @keyframes leafMaskFadeOut{ from{ opacity:1 } to{ opacity:0 } }
   @keyframes yiyanOut{ from{ opacity:1 } to{ opacity:0 } }
-  .modal-mask.open > .modal{ animation:leafPanelIn var(--d3) var(--ease-sheet) both }
-  .modal-mask.closing > .modal{ animation:leafPanelOut var(--d2) var(--ease-out) both }
-  .modal-mask.open{ animation:leafMaskFadeIn var(--d2) var(--ease-std) both }
-  .modal-mask.closing{ animation:leafMaskFadeOut var(--d2) var(--ease-std) both; pointer-events:none }
-  /* MD1：滚动时标题固定顶部、动作按钮固定底部；最多 2 个动作 */
+  /* 方向常量：面板锚在视口右侧，入场 translateX(100%)→0、退场 0→translateX(100%)，
+     三端逐字一致。fill-mode 用 backwards / forwards 而不是 both：
+       · both 会让动画结束后 .modal 仍保留一个非 none 的 transform
+         （Chromium 实测 matrix(1,0,0,1,0,0)，WebKit 桌面实测停在 +420px），
+         它会创建 containing block / 层叠上下文，干扰内部定位；
+       · 退场终帧的 translateX(100%) 若残留，下次打开 backwards 又把面板
+         放回视口右外侧，观感就是「弹窗从另一边（屏幕外）冲进来」。 */
+  .modal-mask.open > .modal{ animation:leafPanelIn var(--d3) var(--ease-sheet) backwards }
+  .modal-mask.closing > .modal{ animation:leafPanelOut var(--d2) var(--ease-out) forwards }
+  .modal-mask.open{ animation:leafMaskFadeIn var(--d2) var(--ease-std) backwards }
+  .modal-mask.closing{ animation:leafMaskFadeOut var(--d2) var(--ease-std) forwards; pointer-events:none }
+  /* 退场动画进行中撤销关闭：直接恢复当前位置，不再从屏幕外重播入场。
+     限定 :not(.closing)，否则这次重开之后的正常退场也会被 animation:none 压住不播。 */
+  .modal-mask.open.reop:not(.closing){ animation:none !important }
+  .modal-mask.open.reop:not(.closing) > .modal{ animation:none !important; transform:none !important }
+  /* MD1：标题固定顶部、动作固定底部（三段式 flex，无 sticky / 无遮挡）；最多 2 个动作 */
   .modal > h2{
-    flex:0 0 auto; position:-webkit-sticky; position:sticky; top:0; z-index:1;
-    background:var(--surface-2); padding-bottom:8px;
+    flex:0 0 auto; padding-bottom:8px;
     padding-top:env(safe-area-inset-top, 0px);
   }
   .modal > .row{
-    flex:0 0 auto; position:-webkit-sticky; position:sticky; bottom:0; z-index:1;
-    background:var(--surface-2); margin-top:auto; padding-top:10px;
+    flex:0 0 auto; padding-top:10px;
     padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px));
   }
   /* 桌面 / 平板：面板限宽 420px，与手机共用同一动画 */
@@ -995,6 +1014,7 @@
 <div class="modal-mask" id="settingsMask">
   <div class="modal settings-modal" role="dialog" aria-modal="true" aria-label="设置">
     <h2 class="serif">设置</h2>
+    <div class="modal-body">
 
     <div class="settings-group">
       <div class="settings-group-title">外观</div>
@@ -1056,6 +1076,7 @@
       </div>
     </div>
 
+    </div><!-- /.modal-body -->
     <div class="row"><button id="settingsClose">关闭</button></div>
   </div>
 </div>
@@ -1064,6 +1085,7 @@
 <div class="modal-mask" id="aboutMask">
   <div class="modal about-modal" role="dialog" aria-modal="true" aria-label="关于 Leaf">
     <h2 class="serif">关于 Leaf</h2>
+    <div class="modal-body">
     <div class="about-body">
       <p class="lead">微光浮影（m.x.）· 正式版 · Slogan：一叶落地，一念生根。</p>
 
@@ -1124,6 +1146,7 @@
 
       <p class="about-sign">𝓫𝔂  𝓶.𝔵. ｜ 微光浮影 🌕</p>
     </div>
+    </div><!-- /.modal-body -->
     <div class="row"><button class="primary" id="aboutClose">看完了</button></div>
   </div>
 </div>
@@ -1132,8 +1155,10 @@
 <div class="modal-mask" id="reviewMask">
   <div class="modal review-modal" role="dialog" aria-modal="true" aria-label="每日一叶">
     <h2 class="serif">每日一叶</h2>
+    <div class="modal-body">
     <div class="review-meta" id="reviewMeta"></div>
     <div class="review-body md" id="reviewBody"></div>
+    </div><!-- /.modal-body -->
     <div class="row">
       <button id="reviewClose">关闭</button>
       <button class="primary" id="reviewNext">换一张</button>
@@ -2127,23 +2152,38 @@ function isReducedMotion(){
 }
 function layerOpen(id){ var m = $(id); return !!(m && m.classList.contains('open')); }
 function forceCloseLayer(id){ var m = $(id); if(m) m.classList.remove('open','closing'); }
+function resetLayerScroll(m){
+  /* display:none↔flex 不重建 DOM，上次关闭时的滚动位置会保留，
+     导致「一打开就停在半截、标题像悬浮」。每次打开回到顶部。 */
+  var body = m.querySelector('.modal-body');
+  if(body) body.scrollTop = 0;
+  if(m.scrollTop) m.scrollTop = 0;
+}
 function openLayer(id){
   var m = $(id);
   if(!m) return;
+  if(m._closeTimer){ clearTimeout(m._closeTimer); m._closeTimer = 0; }  // 撤销待执行的延迟关闭
   if(m.classList.contains('open') && !m.classList.contains('closing')) return;  // 已打开：忽略重复触发
   for(var i=0;i<LAYER_IDS.length;i++){
     var o = LAYER_IDS[i];
     if(o !== id && layerOpen(o)) closeLayer(o);        // 互斥：旧层播退场，不硬切
   }
+  var reopening = m.classList.contains('closing');      // 退场动画中撤销关闭
   m.classList.remove('closing');
+  if(reopening) m.classList.add('reop');               // 就地恢复，不再从视口右外侧冲入
+  else m.classList.remove('reop');
   m.classList.add('open');
+  resetLayerScroll(m);
 }
 function closeLayer(id){
   var m = $(id);
   if(!m || !m.classList.contains('open') || m.classList.contains('closing')) return;
   m.classList.add('closing');
-  setTimeout(function(){ m.classList.remove('open'); m.classList.remove('closing'); },
-             isReducedMotion() ? 0 : 240);
+  if(m._closeTimer) clearTimeout(m._closeTimer);
+  m._closeTimer = setTimeout(function(){
+    m._closeTimer = 0;
+    m.classList.remove('open'); m.classList.remove('closing'); m.classList.remove('reop');
+  }, isReducedMotion() ? 0 : 240);
 }
 /* Esc 按 z-index 从高到低关闭最上层；返回是否处理了 */
 function closeTopLayer(){
