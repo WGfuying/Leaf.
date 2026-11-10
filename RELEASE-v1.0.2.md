@@ -20,6 +20,11 @@
 - 回收站之静：回收站不再给新建入口——浮动的加号、手机输入坞与桌面顶部输入框一同收起，误写一笔便被弹回「全部 MEMO」的窘境就此消失
 - 按钮之同色：置顶与恢复着青、删除与彻底删除着红，与滑动手势露出的提示共用一套语言，点与滑不再各说各话
 - 滚动之瘦：灰色轨道槽退场，滑块收成 5 像素圆头，静止时淡、悬停时深，亮暗两套主题各自得体
+- 搜索之统一：搜索框从侧栏搬到顶栏图标处，就地弹出、就地筛完，不再把人送进侧栏；手机上也终于不再借道抽屉——页面不变灰，结果不再躺在遮罩底下
+- 搜索之生效：标签页与回收站里搜索同样管用，不再只认「全部 MEMO」而静默失效
+- 卡片之读法：单击展开、双击进入编辑；长文展开后若跨越多屏，右下角浮出一颗收起钮，一点便收拢并带你回到卡片顶部
+- 抽屉之景深：左缘滑动时页面缓缓后缩、渐隐，侧栏带着阴影推入，像一页纸从边上压过来
+- 三点之收回：再点一次即收起，不再只开不合
 - 双引擎之证：Chromium 与 WebKit 交叉验证，桌面、Pad 与手机的核心路径均无脚本报错
 
 *「一叶落地，一念生根。」*
@@ -50,6 +55,11 @@ It's no longer just pretty — it finally works: the cracks are mended, the gest
 - The trash, kept quiet: no way to write in there — the floating plus, the phone input dock and the desktop's top box all withdraw, ending the odd bounce back to All Memos after a misplaced memo
 - Buttons in one voice: pin and restore wear the cyan, delete and purge the warning red — the very language the swipe hints already speak, so tapping and swiping stop contradicting each other
 - A thinner scroll: the grey track steps aside and the thumb thins to a 5-pixel rounded sliver, faint at rest and deeper under the cursor, tuned for both themes
+- Search made one: the box leaves the sidebar for the header icon and opens right there, so nobody is sent off to the sidebar to type; on phones it no longer borrows the drawer — the page stays bright and results no longer sit under a scrim
+- Search that works: it applies in tag views and in the trash too, instead of quietly doing nothing outside All Memos
+- How cards read: a single click unfolds, a double click opens the editor; when an unfolded note runs past a screen, a floating button rises at the lower right to fold it and bring you back to its top
+- The drawer's depth: dragging from the left edge makes the page recede and fade while the sidebar slides in with a shadow, like a sheet pressed in from the side
+- The three dots release: tap them again and the actions fold away
 - Proven on two engines: Chromium and WebKit cross-checked, with no script errors across the core desktop, tablet and phone paths
 
 *"A falling leaf, a growing thought."*
