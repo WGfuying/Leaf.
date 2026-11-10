@@ -45,6 +45,8 @@
     --ease-spring:cubic-bezier(.22,1.06,.36,1);   /* 过冲由 1.4 降到 1.06，不再过度 */
     --ease-sheet:cubic-bezier(.16,.84,.28,1);      /* 底部弹层：快起慢落、无过冲 */
     --d1:.13s; --d2:.24s; --d3:.38s; --d4:.52s;
+    /* 滚动条：停手多久后开始淡出（淡出本身走 --d2，与其它交互退场同长） */
+    --sb-hold:900ms;
     --header-h:48px;
     --dock-h:190px;   /* 由 syncDockPadding() 按展开面板实际高度动态更新 */
     --dock-bg:var(--surface-2); --dock-blur-bg:var(--surface-2);  /* 不透明纸片，不再高斯模糊 */
@@ -204,22 +206,33 @@
   /* 侧栏打开时隐藏顶部栏（flomo 式） */
   .app-header.hidden{ transform:translateY(-100%); pointer-events:none; opacity:0 }
 
-  /* 侧栏搜索入口：不再是真的输入框，而是搜索浮层的触发器（2026-11-10 统一搜索交互）。
-     保留小写输入框的外观，让「点这里搜」的肌肉记忆还在，但输入动作发生在顶栏浮层里。 */
-  .search-trigger{
-    width:100%; display:flex; align-items:center; gap:8px; padding:9px 12px;
+  /* 侧栏搜索：真输入框，就地筛选（2026-11-10 二次修正）。
+     上一版把它做成「触发器」，点一下就在旁边弹出浮层——作者判定为「跳到另一个窗口」。
+     现在它就是输入框本身：键入即筛选右侧列表，不弹层、不改 view、不抢焦点；
+     顶栏图标那份浮层保留（Ctrl/⌘K 与图标共用一个 #searchPop），两处共享同一个 searchTerm。 */
+  .search-field{
+    display:flex; align-items:center; gap:8px; padding:7px 10px;
     border:1px solid var(--line); border-radius:var(--r-md); background:var(--paper-2);
-    color:var(--muted); font:inherit; font-size:14px; text-align:left; cursor:pointer;
-    transition:border-color .15s, background .15s, color .15s;
+    color:var(--muted); transition:border-color .15s, background .15s, color .15s;
   }
-  .search-trigger svg{ flex-shrink:0 }
-  .search-trigger .st-text{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-  .search-trigger .st-kbd{
+  .search-field > svg{ flex-shrink:0 }
+  .sf-input{
+    flex:1; min-width:0; border:0; background:transparent; outline:none; padding:0;
+    color:var(--ink); font:inherit; font-size:14px; line-height:1.6;
+  }
+  .sf-input::placeholder{ color:var(--muted) }
+  .sf-clear{
+    display:none; flex-shrink:0; border:0; background:none; cursor:pointer;
+    color:var(--muted); font-size:13px; line-height:1; padding:3px 4px; border-radius:var(--r-xs);
+  }
+  .sf-clear:hover{ color:var(--ink) }
+  .search-field.filled .sf-clear{ display:block }
+  .search-field.filled .sf-kbd{ display:none }
+  .search-field.filled, .search-field:focus-within{ color:var(--ink); border-color:var(--cyan-soft); background:var(--paper) }
+  .sf-kbd{
     flex-shrink:0; font-size:11px; line-height:1; padding:3px 5px; color:var(--muted);
     border:1px solid var(--line); border-radius:var(--r-xs);
   }
-  .search-trigger:active{ background:var(--paper) }
-  .search-trigger.filtered{ color:var(--ink); border-color:var(--cyan-soft); background:var(--paper) }
 
   /* ---------- 搜索浮层：锚在触发元素处、无遮罩、列表背后实时过滤 ----------
      旧实现把 input 放进侧栏，顶栏图标只能 focus() 它并顺手开抽屉；手机抽屉自带全屏
@@ -322,31 +335,39 @@
   /* ---------- 卡片流 ---------- */
   .stream{ flex:1; overflow-y:auto; padding:calc(var(--header-h) + 12px) clamp(14px,4vw,48px) 24px; background:var(--paper); -webkit-overflow-scrolling:touch }
 
-  /* ---------- 滚动条：细、圆头、无槽、静止淡、悬停加深 ----------
-     默认 Windows / Chromium 的滚动条是 17px 灰槽 + 方角滑块，压在米纸底上很扎眼。
-     这里去掉轨道底色，滑块收到 5px（hover 7px），颜色走 --sb，暗色主题自动跟随。 */
+  /* ---------- 滚动条：统一为「滚动才出现」的浮层 ----------
+     原生滚动条做不到「默认隐藏 + 平滑淡入淡出」：Chromium 只认 ::-webkit-scrollbar
+     的静态样式，Gecko 只认 scrollbar-color / scrollbar-width，两家都不给滑块透明度
+     做动画；而一旦用 scrollbar-width:none 收起，内容宽度立刻变化 → 重排。
+     做法：原生滑块彻底透明（槽位照旧由 scrollbar-width:thin 占着，宽度与布局不变），
+     真正的滑块交给 #asb 这一颗浮层绘制；六个面板共用同一份延迟（--sb-hold）与
+     同一段时长（--d2），所以显隐节奏在三端、各面板之间完全一致。 */
   .stream, .sidebar, .modal-body, .about-body, .review-body, .ed-preview{
-    scrollbar-width:thin; scrollbar-color:var(--sb) transparent;
+    scrollbar-width:thin; scrollbar-color:transparent transparent;
   }
   .stream::-webkit-scrollbar, .sidebar::-webkit-scrollbar, .modal-body::-webkit-scrollbar,
   .about-body::-webkit-scrollbar, .review-body::-webkit-scrollbar, .ed-preview::-webkit-scrollbar{
     width:11px; height:11px;
   }
-  .stream::-webkit-scrollbar-track, .sidebar::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track,
-  .about-body::-webkit-scrollbar-track, .review-body::-webkit-scrollbar-track, .ed-preview::-webkit-scrollbar-track{
-    background:transparent;
-  }
   .stream::-webkit-scrollbar-thumb, .sidebar::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb,
-  .about-body::-webkit-scrollbar-thumb, .review-body::-webkit-scrollbar-thumb, .ed-preview::-webkit-scrollbar-thumb{
-    background:var(--sb); border-radius:99px;
-    border:3px solid transparent; background-clip:content-box;   /* 透明边 = 视觉留白，滑块只剩 5px */
+  .about-body::-webkit-scrollbar-thumb, .review-body::-webkit-scrollbar-thumb, .ed-preview::-webkit-scrollbar-thumb,
+  .stream::-webkit-scrollbar-track, .sidebar::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track,
+  .about-body::-webkit-scrollbar-track, .review-body::-webkit-scrollbar-track, .ed-preview::-webkit-scrollbar-track,
+  .stream::-webkit-scrollbar-corner, .sidebar::-webkit-scrollbar-corner, .modal-body::-webkit-scrollbar-corner{
+    background:transparent; border:none;
   }
-  .stream::-webkit-scrollbar-thumb:hover, .sidebar::-webkit-scrollbar-thumb:hover, .modal-body::-webkit-scrollbar-thumb:hover,
-  .about-body::-webkit-scrollbar-thumb:hover, .review-body::-webkit-scrollbar-thumb:hover, .ed-preview::-webkit-scrollbar-thumb:hover{
-    background:var(--sb-hover); border:2px solid transparent; background-clip:content-box;  /* 悬停变粗变深 */
+
+  /* 统一滚动条（全站唯一实例）：6px 圆头，落在容器右侧的槽位里。
+     pointer-events 只在显示时打开；隐藏时完全不挡下方内容，也不参与布局。 */
+  #asb{
+    position:fixed; z-index:214; width:6px; min-height:28px;
+    border-radius:99px; background:var(--sb);
+    opacity:0; pointer-events:none;
+    transition:opacity var(--d2) var(--ease-std), background-color var(--d1) linear;
   }
-  .stream::-webkit-scrollbar-corner, .sidebar::-webkit-scrollbar-corner,
-  .modal-body::-webkit-scrollbar-corner{ background:transparent }
+  #asb::before{ content:''; position:absolute; top:0; bottom:0; left:-4px; right:-4px }  /* 拖拽热区 14px */
+  #asb.show{ opacity:1; pointer-events:auto }
+  #asb.hot, #asb.drag{ background:var(--sb-hover) }
 
   .empty{ text-align:center; color:var(--muted); margin-top:18vh; font-size:15px; line-height:2 }
   .empty .big{ font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; font-size:20px; color:var(--ink) }
@@ -632,7 +653,6 @@
   /* 桌面端侧栏收起 / 展开开关：默认隐藏，仅桌面（≥821px）显示；手机用汉堡抽屉。
      它和汉堡占用同一左侧槽位，二者互斥显隐。 */
   #sidebarToggle{ display:none }
-  #sidebarToggle .chev{ font-size:22px; line-height:1; font-weight:700; transform:translateY(-1px) }
   @media (min-width:821px){
     #sidebarToggle{ display:flex }
     /* 收起态：侧栏宽度归零、边框 / 内边距收起、内容裁掉，主区（.stream, flex:1）自动占满。
@@ -666,9 +686,15 @@
     .stream, .app-header{
       transform:translateX(calc(var(--sbp, 0) * 16px)) scale(calc(1 - var(--sbp, 0) * 0.035));
       opacity:calc(1 - var(--sbp, 0) * 0.42);
-      transition:transform var(--d2) var(--ease-std), opacity var(--d2) var(--ease-std);
+      /* 模糊随进度连续生长（0 → 2.4px），不是到终点才突然一层糊上；
+         与位移、透明度共用同一个 --sbp，所以整段拖动里三者同步推进。 */
+      filter:blur(calc(var(--sbp, 0) * 2.4px));
+      transition:transform var(--d2) var(--ease-std), opacity var(--d2) var(--ease-std), filter var(--d2) var(--ease-std);
     }
-    body.sb-dragging .stream, body.sb-dragging .app-header{ transition:none }
+    /* 拖动中额外把这三层提为合成层，避免每帧重新栅格化导致模糊「一顿一顿」 */
+    body.sb-dragging .stream, body.sb-dragging .app-header{
+      transition:none; will-change:transform, opacity, filter;
+    }
     /* 拖动中侧栏跟手（transform 无过渡），但阴影留着过渡，随进度淡入 */
     body.sb-dragging .sidebar{ transition:transform 0s, box-shadow .22s var(--ease-std) }
     .menu-toggle{ display:flex }
@@ -1036,9 +1062,11 @@
   <button class="header-hamburger menu-toggle" id="menuToggle" aria-label="菜单">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
   </button>
-  <!-- 桌面端侧栏收起 / 展开开关：仅桌面可见（手机用左侧汉堡抽屉）。图标随状态翻转 -->
-  <button class="header-hamburger" id="sidebarToggle" aria-label="收起侧栏" title="收起侧栏">
-    <span class="chev" aria-hidden="true">‹</span>
+  <!-- 桌面端侧栏收起 / 展开开关：仅桌面可见（手机用同一位置的汉堡抽屉）。
+       2026-11-10 作者改版：原先用 ‹ / › 两个方向箭头表示开合，展开时朝左、收起后朝右，
+       看着像按钮换了一侧；现在固定为三条杠——与手机端同一个图标、同一个位置、同一个语义。 -->
+  <button class="header-hamburger" id="sidebarToggle" aria-label="收起侧栏" title="收起侧栏" aria-expanded="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
   </button>
   <div class="header-logo" id="headerLogo">leaf<span class="dot">.</span></div>
   <div class="header-spacer"></div>
@@ -1068,11 +1096,12 @@
       <div class="sidebar-logo" id="logo"><span class="serif">leaf<span class="dot">.</span></span></div>
     </div>
 
-    <button type="button" class="search-trigger" id="searchBox" aria-label="搜索 MEMO">
+    <div class="search-field" id="searchField">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <span class="st-text" id="searchBoxText">搜索…</span>
-      <span class="st-kbd">Ctrl K</span>
-    </button>
+      <input class="sf-input" id="sideSearch" type="text" placeholder="搜索 MEMO 或 #标签" autocomplete="off" spellcheck="false" aria-label="搜索 MEMO">
+      <button type="button" class="sf-clear" id="sideSearchClear" aria-label="清空搜索">✕</button>
+      <span class="sf-kbd" aria-hidden="true">Ctrl K</span>
+    </div>
 
     <button class="nav-primary" id="navAll">
       <span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
@@ -1157,6 +1186,9 @@
 </div>
 <!-- 三端共用的本地图片选择器 -->
 <input type="file" id="auxImgInput" accept="image/*" hidden>
+
+<!-- 全站统一滚动条：滚动时淡入、停手后按 --sb-hold 淡出；六个面板共用这一颗 -->
+<div id="asb" aria-hidden="true"></div>
 
 <!-- FAB 浮动加号按钮（flomo 式） -->
 <button class="fab" id="fabBtn" aria-label="新建 MEMO" title="新建 MEMO">
@@ -1587,6 +1619,94 @@ function updateFabVisibility(){
   }
 }
 
+/* ---------- 统一滚动条（#asb）：滚动才出现，停手后延迟淡出 ----------
+   原生滚动条给不了这套节奏（原因见 CSS 注释），所以滑块由这一颗浮层绘制。
+   六个面板共用同一个实例、同一份 --sb-hold 延时与 --d2 时长：
+   滚动 → 立即淡入（--d2）；停手 900ms → 淡出（--d2）。只改 opacity / top / height，
+   全部是固定定位、脱离文档流，所以显示与隐藏既不占位也不触发任何重排。 */
+var ASB = (function(){
+  var SEL = '#stream, .sidebar, .modal-body, .about-body, .review-body, .ed-preview';
+  var bar = null, cur = null, idleTimer = 0, hold = 900, drag = null;
+
+  function msOf(name, fallback){
+    var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    if(!v) return fallback;
+    var n = parseFloat(v);
+    if(isNaN(n)) return fallback;
+    return /ms$/.test(v) ? n : n * 1000;
+  }
+  function paint(){
+    if(!cur || !bar) return;
+    var r = cur.getBoundingClientRect();
+    var ch = cur.clientHeight, sh = cur.scrollHeight, st = cur.scrollTop;
+    if(sh <= ch + 1 || r.height < 40 || r.width < 40){ bar.classList.remove('show'); return false; }
+    var h = Math.max(28, Math.round(ch * ch / sh));
+    var span = Math.max(1, sh - ch);
+    var top = r.top + (ch - h) * Math.min(1, Math.max(0, st / span));
+    bar.style.height = h + 'px';
+    bar.style.top = Math.round(top) + 'px';
+    bar.style.left = Math.round(r.right - 9) + 'px';
+    return true;
+  }
+  function show(el){
+    if(!bar) return;
+    cur = el;
+    if(!paint()) return;                    // 内容不足一屏：连淡入都不要，免得空滑块闪一下
+    if(!bar.classList.contains('show')) bar.classList.add('show');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function(){ if(!drag) bar.classList.remove('show'); }, hold);
+  }
+  function hide(){ clearTimeout(idleTimer); if(!drag){ cur = null; bar.classList.remove('show'); } }
+
+  function bind(root){
+    var list = (root || document).querySelectorAll(SEL);
+    for(var i = 0; i < list.length; i++){
+      var el = list[i];
+      if(el._asbBound) continue;
+      el._asbBound = 1;
+      el.addEventListener('scroll', function(){ show(this); }, { passive: true });
+    }
+  }
+  function startDrag(e){
+    if(!cur) return;
+    drag = {
+      y: e.clientY,
+      st: cur.scrollTop,
+      ratio: (cur.scrollHeight - cur.clientHeight) / Math.max(1, cur.clientHeight - bar.offsetHeight)
+    };
+    bar.classList.add('drag');
+    clearTimeout(idleTimer);
+    try{ bar.setPointerCapture(e.pointerId); }catch(err){}
+    e.preventDefault();
+  }
+  function moveDrag(e){
+    if(!drag || !cur) return;
+    cur.scrollTop = drag.st + (e.clientY - drag.y) * drag.ratio;
+    paint();
+  }
+  function endDrag(){
+    if(!drag) return;
+    drag = null;
+    if(bar) bar.classList.remove('drag');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function(){ if(bar) bar.classList.remove('show'); }, hold);
+  }
+  function init(){
+    bar = document.getElementById('asb');
+    if(!bar) return;
+    hold = msOf('--sb-hold', 900);
+    bind();
+    bar.addEventListener('pointerdown', startDrag);
+    bar.addEventListener('pointermove', moveDrag);
+    bar.addEventListener('pointerup', endDrag);
+    bar.addEventListener('pointercancel', endDrag);
+    bar.addEventListener('pointerenter', function(){ bar.classList.add('hot'); });
+    bar.addEventListener('pointerleave', function(){ if(!drag) bar.classList.remove('hot'); });
+    window.addEventListener('resize', function(){ if(bar.classList.contains('show')) paint(); });
+  }
+  return { init: init, bind: bind, hide: hide, paint: paint };
+})();
+
 /* ---------- 搜索浮层（2026-11-10 统一三端搜索交互） ----------
    旧实现：输入框住在侧栏里，顶栏图标只能 focus() 它，手机上再顺手 toggleSidebar()。
    可侧栏在手机上是个带全屏遮罩的抽屉（.sidebar-mask，z-index:90 + pointer-events:auto），
@@ -1640,16 +1760,22 @@ function closeSearch(){
   pop._trigger = null;
   $('headerSearch').setAttribute('aria-expanded', 'false');
 }
-/* 有词时：清空钮出现、侧栏入口显示关键词、顶栏图标转青（提示列表正处于筛选态） */
+/* 有词时：清空钮出现、侧栏输入框转「已筛选」态、顶栏图标转青（提示列表正处于筛选态）。
+   两处输入（顶栏浮层 #searchInput / 侧栏 #sideSearch）共享同一个 searchTerm：
+   谁在打字，另一个只做镜像同步，绝不抢焦点。 */
 function updateSearchState(raw){
   var v = (raw === undefined ? searchTerm : raw) || '';
   var kw = v.trim();
   $('searchClear').classList.toggle('show', !!v);
   $('headerSearch').classList.toggle('active', !!kw);
-  var box = $('searchBox'), txt = $('searchBoxText');
-  if(box && txt){
-    box.classList.toggle('filtered', !!kw);
-    txt.textContent = kw || '搜索…';
+  var field = $('searchField');
+  if(field) field.classList.toggle('filled', !!kw);
+  var si = $('sideSearch');
+  if(si && document.activeElement !== si && si.value !== v) si.value = v;
+  var pop = $('searchPop');
+  if(pop && pop.classList.contains('open')){
+    var pi = $('searchInput');
+    if(pi && document.activeElement !== pi && pi.value !== v) pi.value = v;
   }
   var hits = document.querySelectorAll('#list .card').length;
   $('searchHint').textContent = kw ? ('找到 ' + hits + ' 条 · Esc 关闭') : '输入即筛选 · Esc 关闭';
@@ -2514,9 +2640,12 @@ function setSidebarCollapsed(c){
 function toggleSidebarCollapsed(){ setSidebarCollapsed(!sbCollapsed); }
 function updateSidebarToggle(){
   var btn = document.getElementById('sidebarToggle'); if(!btn) return;
-  var chev = btn.querySelector('.chev'); if(chev) chev.textContent = sbCollapsed ? '›' : '‹';
+  // 图标恒定是三条杠（与手机端同一个），只换语义标签——不再让箭头左右翻转，
+  // 否则展开时朝左、收起后朝右，看起来像按钮跑到了另一侧。
   btn.setAttribute('aria-label', sbCollapsed ? '展开侧栏' : '收起侧栏');
   btn.setAttribute('title', sbCollapsed ? '展开侧栏' : '收起侧栏');
+  btn.setAttribute('aria-expanded', sbCollapsed ? 'false' : 'true');
+  btn.classList.toggle('is-collapsed', sbCollapsed);
 }
 
 function handleTouchStart(e){
@@ -2754,18 +2883,53 @@ function bind(){
 
   // 汉堡菜单
   $('menuToggle').onclick = function(){ if(logoLongPressed){ logoLongPressed = false; return; } toggleSidebar(); };
-  // 桌面端侧栏收起 / 展开开关（仅桌面可见；手机不显示，由汉堡抽屉负责）
-  $('sidebarToggle').onclick = function(){ toggleSidebarCollapsed(); };
+  // 桌面端侧栏收起 / 展开开关（仅桌面可见；手机不显示，由汉堡抽屉负责）。
+  // 260ms 锁：宽度归零有过渡，连点时后一次会落在「正在收起的侧栏」上，读起来像过于灵敏。
+  $('sidebarToggle').onclick = function(e){
+    e.stopPropagation();
+    if(this._lock) return;
+    var btn = this; btn._lock = true;
+    setTimeout(function(){ btn._lock = false; }, 260);
+    toggleSidebarCollapsed();
+  };
 
   // 侧栏导航（正确管理 active 状态）
   $('navAll').onclick = function(){ view='all'; activeTag=null; updateNavState(); closeSidebarMobile(); refresh(); };
   $('navReview').onclick = function(){ view='all'; activeTag=null; updateNavState(); closeSidebarMobile(); openReview(this); };
   $('navTrash').onclick = function(){ view='trash'; activeTag=null; updateNavState(); closeSidebarMobile(); refresh(); };
 
-  // 搜索：顶栏图标与侧栏入口共用同一个浮层（2026-11-10 统一，详见 openSearch）
-  var searchTimer;
+  // 搜索：顶栏图标仍是锚定浮层；侧栏改成真输入框，就地筛选（详见上方 .search-field 注释）
+  var searchTimer, sideTimer;
+  function applySearch(v){
+    searchTerm = (v || '').trim();
+    renderList();
+    updateSearchState(v || '');
+  }
   $('headerSearch').onclick = function(e){ e.stopPropagation(); openSearch(this); };
-  $('searchBox').onclick = function(){ openSearch(this, true); };
+  $('sideSearch').addEventListener('input', function(){
+    var v = this.value;
+    updateSearchState(v);                     // 立刻反映清空钮 / 顶栏图标状态
+    clearTimeout(sideTimer);
+    sideTimer = setTimeout(function(){ applySearch(v); }, 120);
+  });
+  $('sideSearch').addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      clearTimeout(sideTimer);
+      applySearch(this.value);
+      this.blur();
+      if(window.innerWidth <= 820) closeSidebar();   // 手机上收抽屉，让结果露出来
+    } else if(e.key === 'Escape'){
+      e.preventDefault();
+      this.value = ''; applySearch('');
+      closeSidebarMobile();
+    }
+  });
+  $('sideSearchClear').onclick = function(){
+    $('sideSearch').value = '';
+    applySearch('');
+    $('sideSearch').focus();
+  };
   $('searchInput').oninput = function(e){
     var v = e.target.value;
     updateSearchState(v);
@@ -2782,13 +2946,20 @@ function bind(){
     renderList();
     $('searchInput').focus();
   };
-  // 点浮层以外的地方收起（但保留筛选结果），点卡片看内容不会把检索状态清掉
+  // 点空白处统一收层：
+  //   · 搜索浮层 → 收起，但保留筛选结果（点卡片看内容不会把检索状态清掉）
+  //   · FAB 输入坞 → 收起（作者 2026-11-10 要求：不该只能靠「取消」退出）
   document.addEventListener('pointerdown', function(e){
+    var t = e.target;
     var pop = $('searchPop');
-    if(!pop.classList.contains('open')) return;
-    if(pop.contains(e.target)) return;
-    if(e.target.closest && (e.target.closest('#headerSearch') || e.target.closest('#searchBox'))) return;
-    closeSearch();
+    if(pop.classList.contains('open')){
+      var onTrigger = t.closest && (t.closest('#headerSearch') || t.closest('#searchField'));
+      if(!pop.contains(t) && !onTrigger) closeSearch();
+    }
+    if(document.body.classList.contains('dock-open')){
+      var keep = t.closest && t.closest('#quickInput, #fabBtn, input[type="file"], .modal-mask.open, .editor.open, .yiyan-mask.open');
+      if(!keep) collapseQuick();
+    }
   }, true);
 
   // 全屏编辑器
@@ -2853,8 +3024,12 @@ function bind(){
 
   // 卡片交互
   var tapState = { id:null, t:0, pre:false };   // 单击/双击判定（见下方 click 分支）
+  // 悬浮收起钮按下的静默窗：钮一收就 display:none，同一指的第二次落点会掉到下面的卡片上，
+  // 于是「连点两下收起」被读成「单击卡片 → 再双击进编辑」。窗口期内一律不认卡片点击。
+  var collapseGuard = 0;
   $('list').addEventListener('click', function(e){
     if(typeof cardSwipe !== 'undefined' && cardSwipe.fired){ cardSwipe.fired = false; return; }
+    if(Date.now() < collapseGuard) return;
     // 就地编辑态：面板内点击由 inline-editor 自己处理，别再触发卡片展开/编辑
     if(e.target.closest('.inline-editor') || e.target.closest('.card.editing')) return;
     var actEl = e.target.closest('[data-act]');
@@ -2871,6 +3046,8 @@ function bind(){
       revealCardMenu(e.target.closest('.meta-menu'));
       return;
     }
+    // 任何按钮 / 表单控件都不算「点卡片本体」：钮上的一次点击不该被读成展开或双击
+    if(e.target.closest('button, input, textarea, select, a, .inline-editor')) return;
     /* 点卡片本体（2026-11-10 作者改版）：单击 = 展开 / 收起；双击 = 进入就地编辑。
        单击立即响应，不为了「等双击」挂 250ms 延迟——那种滞后每点一次都要付一次。
        双击靠 340ms 内同一张卡片的第二次 click 判定，不用原生 dblclick：iOS Safari 的
@@ -2896,6 +3073,7 @@ function bind(){
   // 悬浮收起钮：收起 → 把卡片带回视口顶部
   $('cardCollapse').addEventListener('click', function(e){
     e.stopPropagation();
+    collapseGuard = Date.now() + 400;      // 见上方 collapseGuard 注释
     var card = this._card || document.querySelector('#list .card .body.expanded');
     if(card && card.closest) card = card.closest('.card');
     if(!card) return;
@@ -3110,6 +3288,7 @@ function registerSW(){
 /* ---------- 启动 ---------- */
 (async function init(){
   bind();
+  ASB.init();               // 统一滚动条：绑定六个可滚动面板
   updateSidebarToggle();   // 桌面开关图标初始化（‹ 收起）
   updateSearchState();     // 搜索入口/提示的初始态（有词才显示关键词）
   document.body.style.setProperty('--sbp', '0');
