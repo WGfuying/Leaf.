@@ -1298,7 +1298,10 @@
     </button>
 
     <button class="nav-btn" id="navReview">
-      <span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 5h5.6l-4.5 3.5 1.7 5.5L12 13l-5.2 3 1.7-5.5L4 7h5.6z"/></svg></span>
+      <!-- 叶片：与「Leaf. / 每日一叶」同名相应，取代原先的星形（星形在 UI 里专指收藏/星标，与「随机回顾」语义相冲）。
+           path 包围盒 17×19、中心 (12,12)，与四格 / 垃圾桶一致；旧星形只有 16×14、中心 (12,9)，
+           在 18px 框里既偏上 3px 又小一圈——这就是「位置有点偏」的根因。 -->
+      <span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2.5C6.9 5.4 3.5 9.7 3.5 14C3.5 18.7 7.3 21.5 12 21.5C16.7 21.5 20.5 18.7 20.5 14C20.5 9.7 17.1 5.4 12 2.5Z"/><path d="M12 21.5V6.5"/><path d="M12 12.8L7.8 9.6"/><path d="M12 16.9L16.2 13.7"/></svg></span>
       每日一叶
     </button>
     <button class="nav-btn" id="navTrash">
