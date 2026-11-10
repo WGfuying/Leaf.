@@ -30,7 +30,10 @@
 - 侧栏之开关：两端统一为三条杠，开与合是同一个按钮、同一个位置，不再左右翻箭头让人以为它换了边
 - 收起之稳重：连点悬浮收起钮不再误触展开或编辑，侧栏开关也加了 260ms 的呼吸，不再一点就抖
 - 浮窗之空白：手机新建面板点空白处即收，不必再绕回「取消」
-- 景深之连续：模糊随手指一路生长（0 → 2.4px），与位移、透明度同一条进度线，不是滑到底才突然糊上一层
+- 景深之连续：模糊随手指一路生长，与位移、透明度同一条进度线，不是滑到底才突然糊上一层
+- 拖动之顺：侧栏遮罩改用固定半径的磨砂、只推透明度——半径不变，GPU 每帧只做一次卷积；页面不再逐帧重算整页模糊，真机拖动不再一顿一顿，也不再有「松手之后才糊」的错觉
+- 退场之整：面板退场先保持纸面不透明地失焦后撤（前 62% 不动透明度），最后 38% 才溶解；遮罩同步收，背景不会先于面板「秒变清晰」。面板与遮罩同长同曲线，抽屉也并入同一档参数
+- 提示之齐：toast 这类瞬时小条也走同一套景深（浮起 8px、4px 对焦、小体量档），全站再没有第二套弹出动画
 - 面板之一套景深：侧栏抽屉、设置/关于/回顾、每日一叶、搜索浮层、新建浮窗——五类非全屏面板从此共用同一组参数。入场是「对焦」：纸面先落位，模糊从 12px 收干净，带着 26px 的位移、5.5% 的缩放与 1.2° 的透视；退场是「退层」：沿原轴收回七成行程，再化进背景。模糊、位移、缩放、透视严格同相，误差实测 0.0%
 - 背景之一层退：面板起来时，遮罩不再只是一块灰——它一边压暗一边把身后的页面磨砂（0 → 6px），三层（页面、遮罩、面板）用同一条曲线推进，像镜头拉开而不是贴纸盖上
 - 顶栏之不收：所有弹出面板打开时顶栏都不再收起，只随景深退到背景层；侧栏也照此办理。顶栏位置恒定，搜索浮层的锚点因此再不会被抽走
@@ -75,7 +78,10 @@ It's no longer just pretty — it finally works: the cracks are mended, the gest
 - One toggle, both ends: three lines on desktop as on the phone, the same button in the same place whether the leaf is open or folded, with no arrows flipping sides
 - A steadier fold: rapid taps on the floating fold button no longer fall through into unfold or edit, and the sidebar switch takes a 260ms breath before it answers again
 - A tap on blank space: the phone's writing dock now closes when you touch anywhere outside it, so Cancel is no longer the only way out
-- Depth that keeps up: the blur grows with your finger (0 to 2.4px) on the very same progress line as the shift and the fade, instead of arriving in one sudden layer at the end
+- Depth that keeps up: the blur grows with your finger on the very same progress line as the shift and the fade, instead of arriving in one sudden layer at the end
+- A drag that holds: the drawer scrim now frosts at a fixed radius and only pushes its opacity — the kernel stays constant, the page is never re-filtered per frame, so the drag no longer stutters on a real phone and the blur no longer seems to arrive only after you let go
+- An exit with its depth intact: the panel keeps its paper opaque while it goes out of focus and steps back (62% of the way), then dissolves in the last stretch; the scrim clears with it, so the page never snaps sharp ahead of the panel. Panel and scrim now share one duration and one curve, and the drawer has joined the same tier
+- A voice for the small things: even the toast rides the same depth — rising 8px, focusing from 4px, on the small tier. There is no second animation system left anywhere
 - One depth for every panel: the sidebar drawer, Settings / About / Daily Leaf, the search popover and the phone's writing dock now share a single set of numbers. Entering is a focus pull — the sheet lands first, then the blur clears from 12px to nothing, carried by a 26px shift, a 5.5% scale and a 1.2° tilt; leaving is a step back — seventy percent of the way home, then into the background. Blur, shift, scale and tilt stay in phase, measured at 0.0% drift
 - A background that steps back: the scrim no longer just greys the page — it dims and frosts it (0 to 6px) at the same time, so page, scrim and panel advance on one curve together, more like a lens opening than a sticker being laid down
 - A header that stays: no popup folds it away any more, the sidebar included; it keeps its place and recedes into the depth, so the search popover never loses the point it hangs from
