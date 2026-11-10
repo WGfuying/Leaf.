@@ -35,6 +35,11 @@
 - 退场之整：面板退场先保持纸面不透明地失焦后撤（前 62% 不动透明度），最后 38% 才溶解；遮罩同步收，背景不会先于面板「秒变清晰」。面板与遮罩同长同曲线，抽屉也并入同一档参数
 - 提示之齐：toast 这类瞬时小条也走同一套景深（浮起 8px、4px 对焦、小体量档），全站再没有第二套弹出动画
 - 一叶之标：「每日一叶」的星形换成一片端正的叶子，与 Leaf. 同名相应；星形在界面里本就专指收藏，
+- 搜索之标：侧栏搜索框右端不再挂 `Ctrl K` 键帽，改作一枚柔和的「#标签」提示；placeholder 相应收短为
+  「搜索 MEMO」，两处不再重复，也不会再被徽标截断。顶栏搜索浮层里的 `Ctrl/⌘ K` 保留——那才是真快捷键的提示
+- 退景之顺：模态遮罩的磨砂半径改为恒定 6px，只推透明度。旧版把 `blur(0 → 6 → 0)` 写进关键帧，
+  半径每帧都变，整屏背景必须逐帧重新卷积、无法命中缓存，桌面视口越大越明显——从设置 / 关于返回时
+  就会一顿一顿。现在与抽屉遮罩同一套做法，卷积结果可缓存，关闭后整层从渲染树摘除
   用来表示「随机回顾一条旧 MEMO」是语义错位。旧图形的边界只有 16×14、中心还比格心高 3 个单位，
   在 18px 的图标框里既小一圈又往上飘；新叶为 17×19、正落在 (12,12)，与四格、垃圾桶齐平
 - 面板之一套景深：侧栏抽屉、设置/关于/回顾、每日一叶、搜索浮层、新建浮窗——五类非全屏面板从此共用同一组参数。入场是「对焦」：纸面先落位，模糊从 12px 收干净，带着 26px 的位移、5.5% 的缩放与 1.2° 的透视；退场是「退层」：沿原轴收回七成行程，再化进背景。模糊、位移、缩放、透视严格同相，误差实测 0.0%
@@ -86,6 +91,8 @@ It's no longer just pretty — it finally works: the cracks are mended, the gest
 - An exit with its depth intact: the panel keeps its paper opaque while it goes out of focus and steps back (62% of the way), then dissolves in the last stretch; the scrim clears with it, so the page never snaps sharp ahead of the panel. Panel and scrim now share one duration and one curve, and the drawer has joined the same tier
 - A voice for the small things: even the toast rides the same depth — rising 8px, focusing from 4px, on the small tier. There is no second animation system left anywhere
 - A leaf for the daily leaf: the star beside Daily Leaf is now an upright leaf, answering the name Leaf. A star means favourite, not "pull up an old memo at random", so the old symbol was saying the wrong thing. It also filled only 16×14 units of its 24-unit box with its centre three units too high, which is why it looked small and adrift; the new leaf is 17×19, dead centre, and sits level with the grid and trash icons
+- A hint instead of a keycap: the sidebar search field no longer wears a Ctrl K badge. It now reads #标签 in a soft hint style, and the placeholder shortens to "搜索 MEMO" so the two do not repeat or clip each other. The Ctrl/⌘ K in the header search popover stays — that one really is a shortcut
+- An exit without the stutter: the modal scrim now frosts at a fixed 6px radius and animates only its opacity. The old keyframes interpolated blur(0 → 6 → 0), so the radius changed every frame and the whole viewport had to be re-convolved each time — the bigger the desktop window, the worse the hitch when coming back from Settings or About. It is now the same fixed-radius trick as the drawer scrim: the convolution can be cached, and the whole layer leaves the render tree once closed
 - One depth for every panel: the sidebar drawer, Settings / About / Daily Leaf, the search popover and the phone's writing dock now share a single set of numbers. Entering is a focus pull — the sheet lands first, then the blur clears from 12px to nothing, carried by a 26px shift, a 5.5% scale and a 1.2° tilt; leaving is a step back — seventy percent of the way home, then into the background. Blur, shift, scale and tilt stay in phase, measured at 0.0% drift
 - A background that steps back: the scrim no longer just greys the page — it dims and frosts it (0 to 6px) at the same time, so page, scrim and panel advance on one curve together, more like a lens opening than a sticker being laid down
 - A header that stays: no popup folds it away any more, the sidebar included; it keeps its place and recedes into the depth, so the search popover never loses the point it hangs from
