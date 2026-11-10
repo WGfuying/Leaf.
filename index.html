@@ -59,12 +59,13 @@
          · 分档  大面板（sheet / 抽屉）用完整幅度，小面板（气泡 / 输入坞）用 -sm 档，
                  背景层（scrim 后面的页面）单独一个 --lp-page-blur。 */
     --lp-in:420ms;
-    --lp-out:280ms;
+    --lp-out:320ms;     /* 退场略长：面板全程可见地淡出 + 模糊同步升起，景深才看得完整 */
     --lp-in-sm:320ms;   /* 小面板（气泡 / 输入坞）：体量小，同一曲线但走得更快 */
     --lp-out-sm:220ms;
     --lp-ease:cubic-bezier(.22,.61,.24,1);
     --lp-blur:12px;
     --lp-blur-sm:6px;
+    --lp-blur-xs:4px;   /* 最小体量（toast / 气泡内提示）：再糊就看不清字了 */
     --lp-page-blur:6px;
     --lp-scale:.955;
     --lp-shift:26px;
@@ -693,8 +694,17 @@
   .yiyan-text{ font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; font-size:clamp(18px,4.2vw,27px); color:var(--cyan); text-align:center; line-height:2.1; max-width:760px; text-shadow:0 1px 0 rgba(255,255,255,0.4); white-space:pre-wrap; word-break:break-word }
   .yiyan-text.empty{ font-size:clamp(40px,12vw,90px); line-height:1 }
 
-  .toast{ position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--paper); padding:10px 20px; border-radius:var(--r-md); font-size:13.5px; z-index:240; opacity:0; transition:opacity .2s; pointer-events:none }
-  .toast.show{ opacity:1 }
+  /* 瞬时提示也走同一套景深：浮起 + 对焦 + 淡入，退场反向。
+     小体量档（--lp-in-sm / --lp-out-sm），模糊取 4px —— 黑底白字的小药丸
+     糊到 6px 就散架了。transform 里的 -50% 是水平居中，任何状态都不能丢。 */
+  .toast{ position:fixed; bottom:90px; left:50%; background:var(--ink); color:var(--paper); padding:10px 20px; border-radius:var(--r-md); font-size:13.5px; z-index:240; pointer-events:none;
+          opacity:0; visibility:hidden; filter:blur(var(--lp-blur-xs));
+          transform:translate(-50%, 8px) scale(.985);
+          transition:opacity var(--lp-out-sm) var(--lp-ease), transform var(--lp-out-sm) var(--lp-ease),
+                     filter var(--lp-out-sm) var(--lp-ease), visibility 0s linear var(--lp-out-sm) }
+  .toast.show{ opacity:1; visibility:visible; filter:blur(0); transform:translate(-50%, 0) scale(1);
+          transition:opacity var(--lp-in-sm) var(--lp-ease), transform var(--lp-in-sm) var(--lp-ease),
+                     filter var(--lp-in-sm) var(--lp-ease), visibility 0s }
 
   /* ---------- 移动端（<820px） ---------- */
   .menu-toggle{
@@ -733,32 +743,51 @@
       transform-origin:0 50%;
       scale:calc(var(--lp-scale) + (1 - var(--lp-scale)) * var(--sbp, 0));
       filter:blur(calc((1 - var(--sbp, 0)) * var(--lp-blur) * .5));
-      transition:transform var(--d2) var(--ease-soft), box-shadow var(--d2) var(--ease-std),
-                 scale var(--d2) var(--ease-soft), filter var(--d2) var(--ease-soft);
+      /* 与遮罩、与面板体系同一档参数（小体量档 --lp-in-sm / --lp-out-sm、同一条 --lp-ease）。
+         旧版用 --d2 240ms：抽屉 240ms 就位、遮罩却按 420ms 才糊满，读起来就是
+         "松手之后模糊才慢慢补上"。现在三者同起同落。 */
+      transition:transform var(--lp-out-sm) var(--lp-ease), box-shadow var(--lp-out-sm) var(--ease-std),
+                 scale var(--lp-out-sm) var(--lp-ease), filter var(--lp-out-sm) var(--lp-ease);
       background:var(--paper); will-change:transform;
     }
-    .sidebar.open{ transform:translateX(0); box-shadow:var(--drawer-shadow); }
+    .sidebar.open{
+      transform:translateX(0); box-shadow:var(--drawer-shadow);
+      transition:transform var(--lp-in-sm) var(--lp-ease), box-shadow var(--lp-in-sm) var(--ease-std),
+                 scale var(--lp-in-sm) var(--lp-ease), filter var(--lp-in-sm) var(--lp-ease);
+    }
+    /* 抽屉遮罩 = 抽屉路径的 scrim，与模态遮罩同一组 token（--lp-dim 压暗 + --lp-page-blur 磨砂）。
+       模糊用「固定半径 + 透明度渐变」实现：半径从头到尾不变，GPU 每帧只做一次固定卷积，
+       「模糊逐渐变强」的观感由 opacity 交叉淡入承担 —— 这是拖动跟手不卡的关键；
+       旧实现逐帧改变 .stream 的 blur 半径，每帧全页重新滤波，在真机上必卡，
+       而且只有松手后 animateDepth 才把半径推到终点，看起来"放手才糊"。
+       visibility 门控：收起时整层从渲染树摘除，平时滚动不为这层磨砂付任何代价；
+       退场让 visibility 延迟到透明度播完（0s linear var(--lp-out)），
+       模糊不会在淡出中途硬切。 */
     .sidebar-mask{
-      position:fixed; top:0;right:0;bottom:0;left:0; background:rgba(0,0,0,.25); z-index:90;
-      opacity:0; pointer-events:none; transition:opacity .25s;
+      position:fixed; top:0;right:0;bottom:0;left:0; z-index:90;
+      background:rgba(0,0,0,var(--lp-dim));
+      -webkit-backdrop-filter:blur(var(--lp-page-blur)); backdrop-filter:blur(var(--lp-page-blur));
+      opacity:0; visibility:hidden; pointer-events:none;
+      /* scrim 永远与它的面板同长同曲线 —— 抽屉走小体量档，遮罩也走小体量档 */
+      transition:opacity var(--lp-out-sm) var(--lp-ease), visibility 0s linear var(--lp-out-sm);
+    }
+    .sidebar-mask.show, body.sb-dragging .sidebar-mask{
+      visibility:visible;
+      transition:opacity var(--lp-in-sm) var(--lp-ease), visibility 0s;
     }
     .sidebar-mask.show{ opacity:1; pointer-events:auto; }
     /* 左缘滑动开侧栏：景深渐隐（作者 2026-11-10 指定）。
        拖动进度写在 body 的 --sbp 上（0→1）：页面按比例后缩 + 渐隐，侧栏带着阴影推入。
-       只作用于 .stream / .app-header，抽屉本身的 translateX 逻辑一字未改。
-       模糊取 --lp-page-blur 的 40%：抽屉路径另有 scrim 压暗，两层叠加不必满幅；
-       模态路径没有 scrim 模糊以外的退层，所以走满幅，两者观感才一致。 */
+       只作用于 .stream / .app-header 的位移 / 缩放 / 透明度（全是合成层属性，跟手零滤波）；
+       背景的模糊由 .sidebar-mask 的固定半径 backdrop-filter 提供（见上方注释）。 */
     .stream, .app-header{
       transform:translateX(calc(var(--sbp, 0) * 16px)) scale(calc(1 - var(--sbp, 0) * 0.035));
       opacity:calc(1 - var(--sbp, 0) * 0.42);
-      /* 模糊随进度连续生长（0 → 2.4px），不是到终点才突然一层糊上；
-         与位移、透明度共用同一个 --sbp，所以整段拖动里三者同步推进。 */
-      filter:blur(calc(var(--sbp, 0) * var(--lp-page-blur) * .4));
-      transition:transform var(--d2) var(--ease-std), opacity var(--d2) var(--ease-std), filter var(--d2) var(--ease-std);
+      transition:transform var(--d2) var(--ease-std), opacity var(--d2) var(--ease-std);
     }
-    /* 拖动中额外把这三层提为合成层，避免每帧重新栅格化导致模糊「一顿一顿」 */
+    /* 拖动中额外把这两层提为合成层，避免位移缩放引起重排 */
     body.sb-dragging .stream, body.sb-dragging .app-header{
-      transition:none; will-change:transform, opacity, filter;
+      transition:none; will-change:transform, opacity;
     }
     /* 拖动中侧栏跟手（transform 无过渡），但阴影留着过渡，随进度淡入。
        拖动期间面板保持清晰：手指正在推的那张纸如果自己也糊，会看不出边界；
@@ -1038,16 +1067,6 @@
   .cp-send:active, .qi-send:active, .il-save:active,
   .modal button:active, .ed-btn:active, .md-sw:active{ transform:scale(.96) }
 
-  /* 入场节奏：弹层自下方轻微升起，emphasized 曲线 */
-  @keyframes leafRiseIn{
-    from{ opacity:0; transform:translateY(10px) scale(.985) }
-    to{ opacity:1; transform:none }
-  }
-  @keyframes leafToastIn{
-    from{ opacity:0; transform:translate(-50%, 8px) }
-    to{ opacity:1; transform:translate(-50%, 0) }
-  }
-  .toast.show{ opacity:1; animation:leafToastIn var(--d3) var(--ease-spring) both }
 
   /* 全局 Markdown 渲染开关：开启态给按钮克制的青色底（非彩色投影） */
   .cp-fmt .md-sw.on, .qi-fmt .md-sw.on, .il-fmt .md-sw.on{
@@ -1060,7 +1079,7 @@
     /* 系统开启"减弱动效"时，不只是把时长压到 0：位移、模糊、缩放、透视的幅度
        一并归零，让面板变成纯显隐——否则 0.01ms 的变形会把一帧"糊+歪"的画面钉在屏幕上。 */
     :root{
-      --lp-blur:0px; --lp-blur-sm:0px; --lp-page-blur:0px;
+      --lp-blur:0px; --lp-blur-sm:0px; --lp-blur-xs:0px; --lp-page-blur:0px;
       --lp-shift:0px; --lp-rot:0deg; --lp-scale:1;
       --sb-fade:.01ms;
     }
@@ -1081,18 +1100,24 @@
        · 居中彩蛋（.yiyan-mask）
        · 搜索浮层（.search-pop，锚定气泡）
        · FAB 输入坞（.dock，底部 sheet）
+       · 瞬时提示（.toast）
      显式排除：
        · 全屏页面与路由级视图：view=all / trash 的列表切换是页面态，不做位移动画；
        · 常驻内联容器：≥821px 的侧栏、.composer 常驻输入框、卡片内的 .inline-editor
          （后者属于内容态，随卡片流一起滚动，不是"浮起来的层"）；
        · 已停用的 .editor / .editor-mask（display:none，历史 90vh 上滑模态）；
-       · .fab / .toast / .card-collapse / #asb —— 控件级反馈，不是面板。
+       · .fab / .card-collapse / #asb —— 控件级反馈（按钮 / 悬浮钮 / 滚动条），不是面板。
      【统一映射】设进度 p∈[0,1]。CSS 的关键帧是「按属性各自取锚点」的：blur、位移、
        缩放、透视只在 0% 与 100% 出现，于是它们各自只有一段，共用唯一曲线 --lp-ease
        → blur = max·(1-p)、位移 = shift·(1-p)、缩放 = 1-(1-scale)·(1-p)，严格同相。
-       透明度额外在 18% 处插一个锚点（入场）/ 65% 处（出场）：让不透明的纸面在前 75ms
+       透明度只在入场的 18% 处插一个锚点：让不透明的纸面在前 75ms
        内就到位，之后只做"对焦"。理由是大面积文字面板若全程半透明，背后的卡片文字会
        透上来形成重影，看起来像渲染错误——这是景深，不是双重曝光。
+       退场则相反：透明度前 62% 保持不透明（模糊与位移照常推进，读起来是"纸面失焦后撤"），
+       最后 38% 才溶解到 0（"再消散"）。不这么做的话，缓动曲线前段太陡，面板会在
+       模糊升起来之前就隐形——退场只剩一次普通淡出；若把淡出拉满全程，又会在中段
+       出现"隔着半透明纸看列表"的双重曝光。scrim 同样保持到 62% 再清，
+       背景不会先于面板"秒变清晰"。
      入场 backwards / 退场 forwards（绝不用 both：残留 transform 会创建 containing
      block，干扰面板内部定位——上一轮"弹窗从另一边冲入"的根因）。
      方向由 openLayer → anchorFor() 写入 .anchor-*，位移与透视都朝锚点那一侧。 */
@@ -1121,28 +1146,30 @@
     100%{ opacity:1; filter:blur(0px); transform:none }
   }
   /* 退场不是入场的镜像：只沿原轴回收 70% 行程，同时缩放再收 70%、模糊回升 70%。
-     满程甩出会让模糊来不及被看见（画面大部分时间在屏幕外），也不像"退层"而像"被拖走"。 */
+     满程甩出会让模糊来不及被看见（画面大部分时间在屏幕外），也不像"退层"而像"被拖走"。
+     透明度不设中间锚点、与模糊一起铺满全程：旧版 65% 处就归零，结果面板在模糊
+     升起来之前已经隐形，退场看起来"没有景深"——现在淡出与变糊同步走完 --lp-out。 */
   @keyframes lpOutL{
     0%  { opacity:1; filter:blur(0px); transform:none }
-    65% { opacity:0 }
+    62% { opacity:1 }
     100%{ opacity:0; filter:blur(calc(var(--lp-blur) * .7));
           transform:perspective(var(--lp-persp)) translate3d(calc(var(--lp-shift) * -.7),0,0) rotateY(calc(var(--lp-rot) * .7)) scale(calc(1 - (1 - var(--lp-scale)) * .7)) }
   }
   @keyframes lpOutR{
     0%  { opacity:1; filter:blur(0px); transform:none }
-    65% { opacity:0 }
+    62% { opacity:1 }
     100%{ opacity:0; filter:blur(calc(var(--lp-blur) * .7));
           transform:perspective(var(--lp-persp)) translate3d(calc(var(--lp-shift) * .7),0,0) rotateY(calc(var(--lp-rot) * -.7)) scale(calc(1 - (1 - var(--lp-scale)) * .7)) }
   }
   @keyframes lpOutT{
     0%  { opacity:1; filter:blur(0px); transform:none }
-    65% { opacity:0 }
+    62% { opacity:1 }
     100%{ opacity:0; filter:blur(calc(var(--lp-blur) * .7));
           transform:perspective(var(--lp-persp)) translate3d(0,calc(var(--lp-shift) * -.7),0) rotateX(calc(var(--lp-rot) * -.7)) scale(calc(1 - (1 - var(--lp-scale)) * .7)) }
   }
   @keyframes lpOutB{
     0%  { opacity:1; filter:blur(0px); transform:none }
-    65% { opacity:0 }
+    62% { opacity:1 }
     100%{ opacity:0; filter:blur(calc(var(--lp-blur) * .7));
           transform:perspective(var(--lp-persp)) translate3d(0,calc(var(--lp-shift) * .7),0) rotateX(calc(var(--lp-rot) * .7)) scale(calc(1 - (1 - var(--lp-scale)) * .7)) }
   }
@@ -1155,6 +1182,7 @@
   }
   @keyframes lpScrimOut{
     from{ opacity:1; -webkit-backdrop-filter:blur(var(--lp-page-blur)); backdrop-filter:blur(var(--lp-page-blur)) }
+    62% { opacity:.7 }
     to  { opacity:0; -webkit-backdrop-filter:blur(0px); backdrop-filter:blur(0px) }
   }
   /* 居中彩蛋：只有"向前浮起"一个动作，没有方向轴 */
@@ -1164,6 +1192,7 @@
   }
   @keyframes lpPopOut{
     from{ opacity:1; filter:blur(0px); transform:none }
+    62% { opacity:1 }
     to  { opacity:0; filter:blur(calc(var(--lp-blur) * .7)); transform:scale(calc(1 - (1 - var(--lp-scale)) * .7)) }
   }
   /* 接入点 · 模态层：动画挂在遮罩的子面板上，方向由 .anchor-* 决定 */
@@ -2847,7 +2876,11 @@ function handleTouchMove(e){
   sb.style.transform = 'translateX(' + (-(1-progress)*100) + '%)';
   sb.style.boxShadow = progress > 0 ? 'var(--drawer-shadow)' : '';   // 侧栏以「带阴影的纸」推入
   mk.style.transition = 'none';
-  mk.style.opacity = String(progress * 0.25);
+  /* 与 .sidebar-mask.show 的终值一致（opacity 终点就是 1，压暗由背景色的 --lp-dim 承担）。
+     旧写法 progress * 0.25 是"背景 alpha .25 时代"的残留：拖到头只有 0.25，
+     松手后 CSS 接管跳到 1 —— 遮罩在松手瞬间变暗 4 倍，连带 backdrop 磨砂也显得
+     "放手才真正糊上"。现在拖动全程 = 松手之后，所见即所得。 */
+  mk.style.opacity = String(progress);
   mk.style.pointerEvents = 'none';
   setDepth(progress, true);                                   // 页面随手指后缩渐隐
 }
@@ -2944,7 +2977,7 @@ function closeLayer(id){
   m._closeTimer = setTimeout(function(){
     m._closeTimer = 0;
     m.classList.remove('open'); m.classList.remove('closing'); m.classList.remove('reop');
-  }, isReducedMotion() ? 0 : 280);   // 与 --lp-out 对齐，否则退场会被提前掐断
+  }, isReducedMotion() ? 0 : 320);   // 与 --lp-out 对齐，否则退场会被提前掐断
 }
 /* Esc 按 z-index 从高到低关闭最上层；返回是否处理了 */
 function closeTopLayer(){
