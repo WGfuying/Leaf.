@@ -254,11 +254,13 @@
   }
   .sf-clear:hover{ color:var(--ink) }
   .search-field.filled .sf-clear{ display:block }
-  .search-field.filled .sf-kbd{ display:none }
+  .search-field.filled .sf-hint{ display:none }
   .search-field.filled, .search-field:focus-within{ color:var(--ink); border-color:var(--cyan-soft); background:var(--paper) }
-  .sf-kbd{
-    flex-shrink:0; font-size:11px; line-height:1; padding:3px 5px; color:var(--muted);
-    border:1px solid var(--line); border-radius:var(--r-xs);
+  /* 右端提示「#标签」：不是快捷键，就不该再画成键帽（边框 + 等宽字），
+     改成一枚柔和的 hint。placeholder 相应收短为「搜索 MEMO」，两处不重复、也不会被截断。 */
+  .sf-hint{
+    flex-shrink:0; font-size:11.5px; line-height:1; padding:3px 2px;
+    color:var(--muted); opacity:.85; font-variant-numeric:tabular-nums;
   }
 
   /* ---------- 搜索浮层：锚在触发元素处、无遮罩、列表背后实时过滤 ----------
@@ -1173,17 +1175,21 @@
     100%{ opacity:0; filter:blur(calc(var(--lp-blur) * .7));
           transform:perspective(var(--lp-persp)) translate3d(0,calc(var(--lp-shift) * .7),0) rotateX(calc(var(--lp-rot) * .7)) scale(calc(1 - (1 - var(--lp-scale)) * .7)) }
   }
-  /* 遮罩：压暗与背景模糊同一条曲线（p 同时驱动 opacity 与 backdrop-filter）。
-     backdrop-filter 只作用在遮罩这一层，不碰页面本身的排版与滚动 ——
-     比给 .stream 加 filter 更便宜，也不会让背景内容每一帧重新栅格化。 */
+  /* 遮罩：磨砂半径恒定，只让 opacity 走同一条曲线。
+     旧版把 backdrop-filter 的 blur(0→6→0) 也塞进关键帧：半径每帧都变，整屏
+     背景必须逐帧重新卷积，无法命中浏览器的卷积缓存——桌面视口越大越贵，
+     退场（从设置 / 关于返回）就表现为「景深过程一顿一顿」。
+     现在半径由静态声明固定（模态 ::before / .yiyan-mask），关键帧只推 opacity；
+     视觉上「磨砂逐渐变强/变弱」由整层透明度承担，与 28 节抽屉遮罩完全同一套做法。
+     背景磨砂始终只作用在遮罩这一层，不碰页面排版与滚动。 */
   @keyframes lpScrimIn{
-    from{ opacity:0; -webkit-backdrop-filter:blur(0px); backdrop-filter:blur(0px) }
-    to  { opacity:1; -webkit-backdrop-filter:blur(var(--lp-page-blur)); backdrop-filter:blur(var(--lp-page-blur)) }
+    from{ opacity:0 }
+    to  { opacity:1 }
   }
   @keyframes lpScrimOut{
-    from{ opacity:1; -webkit-backdrop-filter:blur(var(--lp-page-blur)); backdrop-filter:blur(var(--lp-page-blur)) }
+    from{ opacity:1 }
     62% { opacity:.7 }
-    to  { opacity:0; -webkit-backdrop-filter:blur(0px); backdrop-filter:blur(0px) }
+    to  { opacity:0 }
   }
   /* 居中彩蛋：只有"向前浮起"一个动作，没有方向轴 */
   @keyframes lpPopIn{
@@ -1211,12 +1217,16 @@
   /* 不在静止态写 will-change：transform / filter 动画本身就会把面板提为合成层，
      动画结束后自动降回，文字恢复次像素抗锯齿。挂常驻 will-change 反而会让面板
      一直留在合成层上，正文字重看起来发灰。 */
+  /* 固定半径只挂在「面板活着」的两个状态上：完全关闭时不留 backdrop-filter，
+     平时滚动页面不为这层磨砂付任何代价。radius 不进关键帧 → 可缓存。 */
+  .modal-mask.open::before, .modal-mask.closing::before{
+    -webkit-backdrop-filter:blur(var(--lp-page-blur)); backdrop-filter:blur(var(--lp-page-blur));
+  }
   .modal-mask.open::before{
-    opacity:1; -webkit-backdrop-filter:blur(var(--lp-page-blur)); backdrop-filter:blur(var(--lp-page-blur));
-    animation:lpScrimIn var(--lp-in) var(--lp-ease) backwards;
+    opacity:1; animation:lpScrimIn var(--lp-in) var(--lp-ease) backwards;
   }
   .modal-mask.closing{ pointer-events:none }
-  .modal-mask.closing::before{ animation:lpScrimOut var(--lp-out) var(--lp-ease) forwards }
+  .modal-mask.closing::before{ opacity:0; animation:lpScrimOut var(--lp-out) var(--lp-ease) forwards }
   /* 退场动画进行中撤销关闭：直接恢复当前位置，不再从屏幕外重播入场。
      限定 :not(.closing)，否则这次重开之后的正常退场也会被 animation:none 压住不播。 */
   .modal-mask.open.reop:not(.closing) > .modal{ animation:none !important; transform:none !important; filter:none !important }
@@ -1287,9 +1297,9 @@
 
     <div class="search-field" id="searchField">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input class="sf-input" id="sideSearch" type="text" placeholder="搜索 MEMO 或 #标签" autocomplete="off" spellcheck="false" aria-label="搜索 MEMO">
+      <input class="sf-input" id="sideSearch" type="text" placeholder="搜索 MEMO" autocomplete="off" spellcheck="false" aria-label="搜索 MEMO 或标签">
       <button type="button" class="sf-clear" id="sideSearchClear" aria-label="清空搜索">✕</button>
-      <span class="sf-kbd" aria-hidden="true">Ctrl K</span>
+      <span class="sf-hint" aria-hidden="true">#标签</span>
     </div>
 
     <button class="nav-primary" id="navAll">
