@@ -299,10 +299,10 @@
   }
   .card .meta-time{ }
   .card .meta-menu{
-    opacity:0; transition:opacity .15s; cursor:pointer; padding:2px 4px; border-radius:var(--r-xs);
-    color:var(--muted); border:0; background:none; font:inherit; display:inline-flex; align-items:center;
+    display:none;   /* 桌面：悬停已直接露出操作，三点是重复入口（旧版在此宽度下点了没反应） */
+    cursor:pointer; padding:2px 4px; border-radius:var(--r-xs);
+    color:var(--muted); border:0; background:none; font:inherit; align-items:center;
   }
-  .card:hover .meta-menu, .card.show-menu .meta-menu{ opacity:1 }
   .card .meta-menu:active{ color:var(--ink); background:var(--paper-2) }
   .card .tags{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px }
   .card .tags .tag-pill{
@@ -322,11 +322,18 @@
     display:inline-block; font-size:13px; color:var(--cyan); margin-top:4px;
     cursor:pointer; font-weight:500; border:0; background:none; font-family:inherit; padding:0;
   }
-  .card .acts{ margin-top:10px; display:none; gap:16px; font-size:12.5px; padding-top:8px; border-top:1px solid var(--line) }
-  .card:hover .acts, .card.show-menu .acts{ display:flex }
-  .card .acts a, .card .acts button{ color:var(--muted); cursor:pointer; text-decoration:none; transition:color .15s; border:0; background:none; font:inherit; padding:0; }
+  /* 卡片操作：与时间同处一行，悬停淡入。不再占独立一行——避免 hover 时卡片突然长高
+     （旧实现 display:none → flex 会撑开约 34px，正文被顶下去），也去掉那根分隔线。 */
+  .card .meta-tools{ display:inline-flex; align-items:center; gap:10px; flex-shrink:0 }
+  .card .acts{ display:inline-flex; align-items:center; gap:6px; font-size:13px; white-space:nowrap;
+    opacity:0; pointer-events:none; transition:opacity .15s }
+  .card:hover .acts, .card:focus-within .acts, .card.show-menu .acts, .card.trash .acts{ opacity:1; pointer-events:auto }
+  .card .acts a, .card .acts button{
+    color:#5f5c55; cursor:pointer; text-decoration:none; border:0; background:none; font:inherit; font-size:13px;
+    padding:5px 8px; margin:-5px -4px; border-radius:6px; transition:color .15s, background .15s;
+  }
+  .card .acts a:hover, .card .acts button:hover{ background:var(--paper-2); color:var(--ink) }
   .card .acts a:active, .card .acts button:active{ color:var(--cyan) }
-  .card.trash .acts{ display:flex }                 /* 回收站：操作常驻可见，不必先点 ⋮ */
   .card.trash .acts button:first-child{ color:var(--cyan); font-weight:600 }  /* 恢复=青色 CTA */
   .card.trash .acts button:last-child{ color:#c0564f }   /* 彻底删除=警示红 */
 
@@ -557,8 +564,10 @@
     .ed-input{ border-bottom:1px solid var(--line) }
     .ed-preview{ border-left:none }
     .mode-tab{ display:flex; gap:6px }
-    .card:hover .meta-menu, .card:hover .acts{ opacity:0; display:none }
-    .card.show-menu .meta-menu, .card.show-menu .acts{ opacity:1; display:flex }
+    /* 触屏没有 hover 语义：操作改由常驻的 ⋮ 与左右滑动提供 */
+    .card:hover .acts{ opacity:0; pointer-events:none }
+    .card .meta-menu{ display:inline-flex }   /* 手机上三点必须真正可见，否则无从点击 */
+    .card.show-menu .meta-menu, .card.show-menu .acts{ opacity:1; pointer-events:auto }
     .swipe-zone{
       position:fixed; left:0; top:0; bottom:0; width:16px; z-index:50;
       pointer-events:none;   /* 手势统一绑在 document，此空 div 不得拦截左缘点击 */
@@ -582,7 +591,7 @@
     .sort-mode .tag-item .tag-move > * + *{ margin-left:2px }
     .tag-item > * + *{ margin-left:10px }
     .card .tags > * + *{ margin-left:6px }
-    .card .acts > * + *{ margin-left:16px }
+    .card .acts > * + *{ margin-left:2px }   /* 与新版紧凑间距一致（按钮自带 5px 8px 内边距） */
     .ed-bar > * + *{ margin-left:10px }
     .ed-btn > * + *{ margin-left:5px }
     .ed-tools > * + *{ margin-left:10px }
@@ -1431,6 +1440,18 @@ function updateFabVisibility(){
 }
 
 /* ---------- 渲染：卡片列表 ---------- */
+/* 展开卡片操作行（手机上点 ⋮ 用）。定时器挂在卡片元素上，重复点击只重置不叠加，
+   否则连点几次会出现「刚展开就被前一次的定时器收走」。 */
+function revealCardMenu(btn){
+  var card = btn && btn.closest ? btn.closest('.card') : null;
+  if(!card) return;
+  if(card._menuTimer) clearTimeout(card._menuTimer);
+  card.classList.add('show-menu');
+  card._menuTimer = setTimeout(function(){
+    card._menuTimer = 0;
+    card.classList.remove('show-menu');
+  }, 2500);
+}
 function renderList(){
   // 任何重绘都视为就地编辑结束（#list 被整体替换，inline DOM 随之销毁）
   inlineCardId = null;
@@ -1452,12 +1473,14 @@ function renderList(){
       + '<div class="card-face">'
       + '<div class="meta">'
       + '  <span class="meta-time">'+fmtDate(c.updated)+'</span>'
-      + '  <button type="button" class="meta-menu">'+dotsSvg+'</button>'
+      + '  <span class="meta-tools">'
+      + '    <span class="acts">'+acts+'</span>'
+      + '    <button type="button" class="meta-menu" aria-label="更多操作">'+dotsSvg+'</button>'
+      + '  </span>'
       + '</div>'
       + (tags ? '<div class="tags">'+tags+'</div>' : '')
       + '<div class="body md'+(isLong?' truncated':'')+'">'+preview+'</div>'
       + (isLong ? '<button type="button" class="expand">展开</button>' : '')
-      + '<div class="acts">'+acts+'</div>'
       + '</div></div>';
   }).join('');
   // 双保险：给每个操作按钮直绑 click，不依赖整条列表的事件冒泡（防御某些渲染器事件委托失效）
@@ -1473,6 +1496,19 @@ function renderList(){
       if(!hit || (hit !== b && !b.contains(hit))) return;   // 落点已滑出按钮则不算点击
       if(e.cancelable) e.preventDefault();
       runCardAction(b.dataset.act, b.dataset.id);
+    }, { passive:false });
+  });
+  // ⋮ 会被同一类「触屏合成 click 的 target 漂移」吞掉（手机上曾出现点了没反应），
+  // 按同一套坐标确认做 touchend 直绑，不依赖冒泡。
+  Array.prototype.forEach.call(wrap.querySelectorAll('.meta-menu'), function(b){
+    b.addEventListener('click', function(e){ e.stopPropagation(); revealCardMenu(b); });
+    b.addEventListener('touchend', function(e){
+      var t = e.changedTouches && e.changedTouches[0];
+      if(!t) return;
+      var hit = document.elementFromPoint(t.clientX, t.clientY);
+      if(!hit || (hit !== b && !b.contains(hit))) return;
+      if(e.cancelable) e.preventDefault();
+      revealCardMenu(b);
     }, { passive:false });
   });
 }
@@ -2523,11 +2559,7 @@ function bind(){
     if(e.target.classList.contains('expand')){ e.stopPropagation(); toggleExpand(e.target.closest('.card')); return; }
     if(e.target.closest('.meta-menu')){
       e.stopPropagation();
-      var cardEl = e.target.closest('.card');
-      if(cardEl && window.innerWidth <= 820){
-        cardEl.classList.toggle('show-menu');
-        setTimeout(function(){ cardEl.classList.remove('show-menu'); }, 2500);
-      }
+      revealCardMenu(e.target.closest('.meta-menu'));
       return;
     }
     // 点卡片本体：三端一律就地展开编辑；长 memo 的「展开」按钮仍可纯阅读
