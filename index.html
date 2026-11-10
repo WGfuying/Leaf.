@@ -20,6 +20,7 @@
     --paper:#f5f3ee; --surface:#fcfaf6; --surface-2:#fffdfa;
     --ink:#1f1f1f; --cyan:#2f9e9e; --cyan-soft:#a7dbdb;
     --line:rgba(48,44,36,0.12); --muted:#8b887f; --paper-2:#ebe7dd;
+    --sb:rgba(48,44,36,0.16); --sb-hover:rgba(48,44,36,0.34);   /* 滚动条：静止淡、悬停显 */
     --tag-bg:rgba(47,158,158,0.10); --tag-text:#2f9e9e;
     /* 纸张质感（作者 2026-11-09 21:16 改）：尽量避免圆角，只留 1–3px 纸边倒角 */
     --r-xs:1px; --r-sm:2px; --r-md:2px; --r-lg:2px; --r-xl:3px; --r-pill:2px;
@@ -51,6 +52,7 @@
   [data-theme="dark"]{
     --paper:#16191c; --surface:#1e2227; --surface-2:#252b31; --ink:#e7ebec; --cyan:#3fbdbd; --cyan-soft:#2a6b6b;
     --line:rgba(255,255,255,0.10); --muted:#8f989d; --paper-2:#1e242a;
+    --sb:rgba(255,255,255,0.14); --sb-hover:rgba(255,255,255,0.30);
     --tag-bg:rgba(63,189,189,0.14); --tag-text:#5fd0d0;
     --elev-0:none;
     --elev-1:0 2px 6px -2px rgba(0,0,0,0.44);
@@ -66,6 +68,7 @@
     :root:not([data-theme="light"]){
       --paper:#16191c; --surface:#1e2227; --surface-2:#252b31; --ink:#e7ebec; --cyan:#3fbdbd; --cyan-soft:#2a6b6b;
         --line:rgba(255,255,255,0.10); --muted:#8f989d; --paper-2:#1e242a;
+    --sb:rgba(255,255,255,0.14); --sb-hover:rgba(255,255,255,0.30);
         --tag-bg:rgba(63,189,189,0.14); --tag-text:#5fd0d0;
         --elev-0:none;
         --elev-1:0 2px 6px -2px rgba(0,0,0,0.44);
@@ -266,6 +269,32 @@
   /* ---------- 卡片流 ---------- */
   .stream{ flex:1; overflow-y:auto; padding:calc(var(--header-h) + 12px) clamp(14px,4vw,48px) 24px; background:var(--paper); -webkit-overflow-scrolling:touch }
 
+  /* ---------- 滚动条：细、圆头、无槽、静止淡、悬停加深 ----------
+     默认 Windows / Chromium 的滚动条是 17px 灰槽 + 方角滑块，压在米纸底上很扎眼。
+     这里去掉轨道底色，滑块收到 5px（hover 7px），颜色走 --sb，暗色主题自动跟随。 */
+  .stream, .sidebar, .modal-body, .about-body, .review-body, .ed-preview{
+    scrollbar-width:thin; scrollbar-color:var(--sb) transparent;
+  }
+  .stream::-webkit-scrollbar, .sidebar::-webkit-scrollbar, .modal-body::-webkit-scrollbar,
+  .about-body::-webkit-scrollbar, .review-body::-webkit-scrollbar, .ed-preview::-webkit-scrollbar{
+    width:11px; height:11px;
+  }
+  .stream::-webkit-scrollbar-track, .sidebar::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track,
+  .about-body::-webkit-scrollbar-track, .review-body::-webkit-scrollbar-track, .ed-preview::-webkit-scrollbar-track{
+    background:transparent;
+  }
+  .stream::-webkit-scrollbar-thumb, .sidebar::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb,
+  .about-body::-webkit-scrollbar-thumb, .review-body::-webkit-scrollbar-thumb, .ed-preview::-webkit-scrollbar-thumb{
+    background:var(--sb); border-radius:99px;
+    border:3px solid transparent; background-clip:content-box;   /* 透明边 = 视觉留白，滑块只剩 5px */
+  }
+  .stream::-webkit-scrollbar-thumb:hover, .sidebar::-webkit-scrollbar-thumb:hover, .modal-body::-webkit-scrollbar-thumb:hover,
+  .about-body::-webkit-scrollbar-thumb:hover, .review-body::-webkit-scrollbar-thumb:hover, .ed-preview::-webkit-scrollbar-thumb:hover{
+    background:var(--sb-hover); border:2px solid transparent; background-clip:content-box;  /* 悬停变粗变深 */
+  }
+  .stream::-webkit-scrollbar-corner, .sidebar::-webkit-scrollbar-corner,
+  .modal-body::-webkit-scrollbar-corner{ background:transparent }
+
   .empty{ text-align:center; color:var(--muted); margin-top:18vh; font-size:15px; line-height:2 }
   .empty .big{ font-family:"Optima","Palatino Linotype","Palatino","Candara","Songti SC",Georgia,"Times New Roman",serif; font-size:20px; color:var(--ink) }
 
@@ -330,12 +359,14 @@
   .card:hover .acts, .card:focus-within .acts, .card.show-menu .acts, .card.trash .acts{ opacity:1; pointer-events:auto }
   .card .acts a, .card .acts button{
     color:#5f5c55; cursor:pointer; text-decoration:none; border:0; background:none; font:inherit; font-size:13px;
-    padding:5px 8px; margin:-5px -4px; border-radius:6px; transition:color .15s, background .15s;
+    padding:5px 8px; margin:-5px -4px; border-radius:6px; transition:background .15s, opacity .15s;
   }
-  .card .acts a:hover, .card .acts button:hover{ background:var(--paper-2); color:var(--ink) }
-  .card .acts a:active, .card .acts button:active{ color:var(--cyan) }
-  .card.trash .acts button:first-child{ color:var(--cyan); font-weight:600 }  /* 恢复=青色 CTA */
-  .card.trash .acts button:last-child{ color:#c0564f }   /* 彻底删除=警示红 */
+  /* 与滑动手势露出的提示文案同色：置顶 / 恢复 = 青（tint-pin / tint-restore），
+     删除 / 彻底删除 = 警示红（tint-del / tint-purge）。点与滑两条路径的语义因此对齐。 */
+  .card .acts button[data-act="pin"], .card .acts button[data-act="restore"]{ color:var(--cyan); font-weight:600 }
+  .card .acts button[data-act="del"], .card .acts button[data-act="purge"]{ color:#c0392b }
+  .card .acts a:hover, .card .acts button:hover{ background:var(--paper-2) }
+  .card .acts a:active, .card .acts button:active{ opacity:.68 }
 
   /* ---------- FAB（作者 2026-11-09 21:16 拍板复活，替换手机端常驻输入框） ----------
      位置：屏幕底部水平居中 = MD2 center-docked FAB 变体，左右手拇指对称可达。
@@ -616,6 +647,13 @@
      Pad 821–1199 / 电脑 ≥1200：顶部常驻输入框 + 卡片就地编辑。
      FAB 与 90vh 上滑模态由作者主动废止（见交接文档第 14 节），DOM 保留但全局隐藏。
      判定靠宽度断点 + pointer 能力，UA 只兜底 iOS12 已知缺陷；无 inset / :has / Grid。 */
+
+  /* 回收站是只读视图：不给新建入口。此前移动端 FAB、桌面顶部输入框都还在，
+     写下的 memo 不属于回收站（保存后会被跳回「全部 MEMO」），入口本身就是误导。 */
+  body.trash-view .composer,
+  body.trash-view .dock,
+  body.trash-view .fab,
+  body.trash-view #fabBtn{ display:none !important }
 
   /* 常驻输入框（Pad / 电脑） */
   .composer{
@@ -1413,6 +1451,9 @@ function updateNavState(){
   var navAll = $('navAll');
   var navTrash = $('navTrash');
 
+  // 回收站只读：整页隐藏新建入口（顶部 composer / 手机 dock / FAB），见 CSS body.trash-view
+  document.body.classList.toggle('trash-view', view === 'trash');
+
   if(view === 'trash'){
     // 回收站激活 → 全部 MEMO 退为非活跃态
     navAll.classList.add('inactive');
@@ -1432,7 +1473,8 @@ function updateNavState(){
 function updateFabVisibility(){
   var fab = $('fabBtn');
   var sidebarOpen = $('sidebar').classList.contains('open');
-  if(sidebarOpen){
+  // 回收站不提供新建（新 memo 属于主列表，写在回收站页会立刻被跳走），FAB 一并收起
+  if(sidebarOpen || view === 'trash'){
     fab.classList.add('hidden');
   } else {
     fab.classList.remove('hidden');
