@@ -2022,7 +2022,7 @@ function renderList(){
   var wrap = $('list');
   if(list.length === 0){
     var emptyMsg = view==='trash' ? '回收站是空的'
-                 : (searchTerm ? '没有匹配的 MEMO' : '还没有 MEMO');
+                 : (searchTerm ? '没有匹配的 MEMO 和 #标签' : '还没有 MEMO');
     wrap.innerHTML = '<div class="empty"><div class="big serif">'+emptyMsg+'</div>'
       + (searchTerm ? '<div style="font-size:13px">换个词试试，或点顶栏搜索图标清空</div>' : '') + '</div>';
     updateCollapseBtn();
