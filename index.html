@@ -254,13 +254,20 @@
   }
   .sf-clear:hover{ color:var(--ink) }
   .search-field.filled .sf-clear{ display:block }
-  .search-field.filled .sf-hint{ display:none }
+  .search-field.filled .sf-kbd{ display:none }
   .search-field.filled, .search-field:focus-within{ color:var(--ink); border-color:var(--cyan-soft); background:var(--paper) }
-  /* 右端提示「#标签」：不是快捷键，就不该再画成键帽（边框 + 等宽字），
-     改成一枚柔和的 hint。placeholder 相应收短为「搜索 MEMO」，两处不重复、也不会被截断。 */
-  .sf-hint{
-    flex-shrink:0; font-size:11.5px; line-height:1; padding:3px 2px;
-    color:var(--muted); opacity:.85; font-variant-numeric:tabular-nums;
+  /* 占位文案是完整一句「搜索 MEMO 和 #标签」，#标签 属于正文、不进右侧徽标区；
+     右端 Ctrl K 键帽独立且不参与收缩，文字再长也不会把快捷键提示顶掉。 */
+  .sf-kbd{
+    flex-shrink:0; font-size:10.5px; line-height:1; padding:2px 4px;
+    color:var(--muted); border:1px solid var(--line); border-radius:var(--r-xs);
+    white-space:nowrap;
+  }
+  /* Pad 档侧栏仅 220px：整句占位与键帽要同排放得下，单独收紧这一档的间距与占位字号。
+     只缩小 placeholder，用户真正键入的文字仍是 14px，聚焦时自然切换。 */
+  @media (min-width:821px) and (max-width:1199px){
+    .search-field{ gap:5px; padding:7px 8px }
+    .sf-input::placeholder{ font-size:11.5px; letter-spacing:-.2px }
   }
 
   /* ---------- 搜索浮层：锚在触发元素处、无遮罩、列表背后实时过滤 ----------
@@ -1279,7 +1286,7 @@
 <div class="search-pop" id="searchPop" role="dialog" aria-label="搜索 MEMO">
   <div class="sp-row">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input class="sp-input" id="searchInput" type="text" placeholder="搜索 MEMO 或 #标签" autocomplete="off" spellcheck="false" aria-label="搜索关键词">
+    <input class="sp-input" id="searchInput" type="text" placeholder="搜索 MEMO 和 #标签" autocomplete="off" spellcheck="false" aria-label="搜索关键词">
     <button type="button" class="sp-clear" id="searchClear" aria-label="清空搜索">✕</button>
   </div>
   <div class="sp-hint"><span id="searchHint">输入即筛选 · Esc 关闭</span><span>Ctrl/⌘ K</span></div>
@@ -1297,9 +1304,9 @@
 
     <div class="search-field" id="searchField">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input class="sf-input" id="sideSearch" type="text" placeholder="搜索 MEMO" autocomplete="off" spellcheck="false" aria-label="搜索 MEMO 或标签">
+      <input class="sf-input" id="sideSearch" type="text" placeholder="搜索 MEMO 和 #标签" autocomplete="off" spellcheck="false" aria-label="搜索 MEMO 和 #标签">
       <button type="button" class="sf-clear" id="sideSearchClear" aria-label="清空搜索">✕</button>
-      <span class="sf-hint" aria-hidden="true">#标签</span>
+      <span class="sf-kbd" aria-hidden="true">Ctrl K</span>
     </div>
 
     <button class="nav-primary" id="navAll">
