@@ -2536,6 +2536,12 @@ function openInlineEditor(id){
   inlineCardId = id;
   ta.focus();
   autoGrow(ta, window.innerHeight*0.52);
+  /* JS 给 value 赋值后 selection 落在末尾，focus 时浏览器还会把 textarea 卷到最底，
+     于是打开一篇长文只看见结尾。显式把光标与滚动归零、并同步镜像层：从开头读起，
+     之后点哪改哪完全交给原生 textarea。 */
+  try{ ta.setSelectionRange(0, 0); }catch(e){}
+  ta.scrollTop = 0;
+  syncLiveScroll(ta);
   syncMdUI();
 }
 function closeInlineEditor(){
@@ -3315,7 +3321,12 @@ function bind(){
     if(edgeGuard && x <= 60) return false;                 // 手机左缘留给侧栏手势
     var t = target;
     if(!t || !t.closest) return false;
-    if(t.closest('[data-act]') || t.closest('.meta-menu') || t.closest('.expand') || t.closest('button')) return false;
+    /* 就地编辑态与表单控件一律不接管手势：listMouseStart 会在 mousedown 上
+       preventDefault()，一旦命中 textarea，浏览器就无法把光标落到点击处、也无法拖选，
+       长文档打开后光标便永远锁在末尾。touch 端同理，同一套排除三端生效。 */
+    if(t.closest('[data-act]') || t.closest('.meta-menu') || t.closest('.expand') || t.closest('button')
+       || t.closest('.inline-editor') || t.closest('.card.editing')
+       || t.closest('textarea, input, select, [contenteditable]')) return false;
     var card = t.closest('.card');
     if(!card) return false;
     cardSwipe.el = card;
