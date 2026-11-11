@@ -45,6 +45,8 @@
 - 顶栏之不收：所有弹出面板打开时顶栏都不再收起，只随景深退到背景层；侧栏也照此办理。顶栏位置恒定，搜索浮层的锚点因此再不会被抽走
 - 滚动条之柔：显隐统一为 340ms 长尾曲线，进出方向各带 2px 微位移，不再是「啪」一下掐断；停手九百毫秒后才开始退场，看的人来得及跟上
 - 空态之名：搜索无结果时不再只说「没有匹配的 MEMO」，补成「没有匹配的 MEMO 和 #标签」，与搜索框的用词一致；副提示与回收站空态照旧
+- 长文之可改：打开一篇长 MEMO 编辑，光标不再锁在末尾、窗格也不再卷到最底；桌面与 Pad 的卡片滑动手势不再吞掉编辑框的
+  `mousedown`，点击定位、拖选、方向键导航与「点哪改哪」全部恢复，普通卡片上的左右滑动照旧
 - 双引擎之证：Chromium 与 Gecko（Firefox）交叉验证，桌面、Pad 与手机的核心路径均无脚本报错
 
 *「一叶落地，一念生根。」*
@@ -97,6 +99,7 @@ It's no longer just pretty — it finally works: the cracks are mended, the gest
 - A header that stays: no popup folds it away any more, the sidebar included; it keeps its place and recedes into the depth, so the search popover never loses the point it hangs from
 - A softer scrollbar: showing and hiding now share one 340ms long-tail curve, with a 2px drift in either direction, instead of being snipped off; and it waits nine hundred milliseconds of stillness before it begins to go
 - An empty state that names both: a search with no results now reads "没有匹配的 MEMO 和 #标签" instead of just "没有匹配的 MEMO", matching the wording of the search field. The smaller hint and the trash empty state are unchanged
+- Long memos are editable again: opening a long card no longer parks the caret at the very end and scrolls the field to the bottom, and the card swipe gesture no longer swallows mousedown on the editor's textarea. Clicking to place the caret, drag selection, arrow-key navigation and editing in the middle all work; swiping an ordinary card still does what it did
 - Proven on two engines: Chromium and Gecko (Firefox) cross-checked, with no script errors across the core desktop, tablet and phone paths
 
 *"A falling leaf, a growing thought."*
