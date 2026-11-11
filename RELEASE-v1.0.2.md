@@ -44,6 +44,7 @@
 - 背景之一层退：面板起来时，遮罩不再只是一块灰——它一边压暗一边把身后的页面磨砂（0 → 6px），三层（页面、遮罩、面板）用同一条曲线推进，像镜头拉开而不是贴纸盖上
 - 顶栏之不收：所有弹出面板打开时顶栏都不再收起，只随景深退到背景层；侧栏也照此办理。顶栏位置恒定，搜索浮层的锚点因此再不会被抽走
 - 滚动条之柔：显隐统一为 340ms 长尾曲线，进出方向各带 2px 微位移，不再是「啪」一下掐断；停手九百毫秒后才开始退场，看的人来得及跟上
+- 空态之名：搜索无结果时不再只说「没有匹配的 MEMO」，补成「没有匹配的 MEMO 和 #标签」，与搜索框的用词一致；副提示与回收站空态照旧
 - 双引擎之证：Chromium 与 Gecko（Firefox）交叉验证，桌面、Pad 与手机的核心路径均无脚本报错
 
 *「一叶落地，一念生根。」*
@@ -95,6 +96,7 @@ It's no longer just pretty — it finally works: the cracks are mended, the gest
 - A background that steps back: the scrim no longer just greys the page — it dims and frosts it (0 to 6px) at the same time, so page, scrim and panel advance on one curve together, more like a lens opening than a sticker being laid down
 - A header that stays: no popup folds it away any more, the sidebar included; it keeps its place and recedes into the depth, so the search popover never loses the point it hangs from
 - A softer scrollbar: showing and hiding now share one 340ms long-tail curve, with a 2px drift in either direction, instead of being snipped off; and it waits nine hundred milliseconds of stillness before it begins to go
+- An empty state that names both: a search with no results now reads "没有匹配的 MEMO 和 #标签" instead of just "没有匹配的 MEMO", matching the wording of the search field. The smaller hint and the trash empty state are unchanged
 - Proven on two engines: Chromium and Gecko (Firefox) cross-checked, with no script errors across the core desktop, tablet and phone paths
 
 *"A falling leaf, a growing thought."*
