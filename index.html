@@ -2603,33 +2603,51 @@ function closeReview(){ closeLayer('reviewMask'); }
 /* ---------- 一言彩蛋 ---------- */
 var YIYAN_LINES = [
   "记录不是为了记录，出去浪才是正经事儿！（火锅好吃～o(^▽^)o）",
-  "为了打卡而记录？在咱这儿没有的事儿～(o^з^o)",
+  "为了打卡而记录？在咱这儿没有的事儿～(o^з^o)💞",
   "谁说记录要一个灵感都不错过？制作组第一个不同意！（喵！ヽ(`Д´)ﾉ）",
-  "要是我的每一个灵感都要被记录，那我的手机可第一个不同意！(✋ˇ-ˇ)",
-  "如果你想的是「记录想法的川流」，那这未免有点太漫长了……Σ(っ°Д°;)っ",
+  "要是我的每一个灵感都要被记录，那我的手机可第一个不同意，因为它吃不下啦！！！(✋ˇ-ˇ)",
+  "如果你是为了「记录想法的川流」，那这未免有点太漫长了……Σ(っ°Д°;)っ",
   "你想啥时候来都可以，我才不会像别人一样逼着你～哼～<(｀^´)>",
 ];
 var YIYAN_KAOMOJI = ["o(^▽^)o","(o^з^o)","ヽ(`Д´)ﾉ","(✋ˇ-ˇ)","Σ(っ°Д°;)っ","<(｀^´)>","(｀・ω・´)","ヾ(≧▽≦*)o"];
+/* 规则（作者 2026-11-20 定）：
+   · 每次手势（FAB 上滑 / Logo 双击·长按）彩蛋都会浮现，抽空白也算一次浮现；
+   · 「一天 2 次」指 2 次正经文案，不是 2 次手势 —— 计数只在抽中文案时 +1；
+   · 出过一次文案后 20 秒内不再出文案（不能「立刻」再来）；
+   · 2 次用满或冷却中，抽取池里就只剩空白 / 颜文字 / 🌕，空白始终占最大头，
+     刻意不让人养成天天刷彩蛋的习惯。 */
+var YIYAN_DAILY_LIMIT = 2, YIYAN_COOLDOWN = 20000;
 function yiyanTodayKey(){ var d = new Date(); return 'leaf_yiyan_'+d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function yiyanLastKey(){ return yiyanTodayKey()+'_last'; }
 function yiyanCount(){ try{ return parseInt(localStorage.getItem(yiyanTodayKey())||'0',10) || 0; }catch(e){ return 0; } }
-function yiyanBump(){ try{ localStorage.setItem(yiyanTodayKey(), String(yiyanCount()+1)); }catch(e){} }
+function yiyanLastAt(){ try{ return parseInt(localStorage.getItem(yiyanLastKey())||'0',10) || 0; }catch(e){ return 0; } }
+function yiyanMarkLine(){
+  try{
+    localStorage.setItem(yiyanTodayKey(), String(yiyanCount()+1));
+    localStorage.setItem(yiyanLastKey(), String(Date.now()));
+  }catch(e){}
+}
 function yiyanPick(){
+  var canLine = yiyanCount() < YIYAN_DAILY_LIMIT && (Date.now() - yiyanLastAt()) >= YIYAN_COOLDOWN;
   var r = Math.random();
-  if(r < 0.60) return {text:'', empty:true};
-  if(r < 0.75) return {text:'🌕', empty:false};
-  if(r < 0.85) return {text:YIYAN_KAOMOJI[Math.floor(Math.random()*YIYAN_KAOMOJI.length)], empty:false};
-  return {text:YIYAN_LINES[Math.floor(Math.random()*YIYAN_LINES.length)], empty:false};
+  if(canLine){
+    if(r < 0.60) return {text:'', empty:true};
+    if(r < 0.72) return {text:'🌕', empty:false};
+    if(r < 0.90) return {text:YIYAN_KAOMOJI[Math.floor(Math.random()*YIYAN_KAOMOJI.length)], empty:false};
+    yiyanMarkLine();                                            // 只有真正抽中文案才记账 + 打冷却戳
+    return {text:YIYAN_LINES[Math.floor(Math.random()*YIYAN_LINES.length)], empty:false};
+  }
+  /* 文案不可出（冷却中或当日已满）：原本留给文案的 10% 并入空白，空白仍是最大头 */
+  if(r < 0.70) return {text:'', empty:true};
+  if(r < 0.82) return {text:'🌕', empty:false};
+  return {text:YIYAN_KAOMOJI[Math.floor(Math.random()*YIYAN_KAOMOJI.length)], empty:false};
 }
 function showYiyan(){
   var pick = yiyanPick();
   var el = $('yiyanText'); el.textContent = pick.text; el.classList.toggle('empty', !!pick.empty);
   openLayer('yiyanMask');
 }
-function tryYiyan(){
-  if(Math.random() > 0.5) return;
-  if(yiyanCount() >= 2) return;
-  yiyanBump(); showYiyan();
-}
+function tryYiyan(){ showYiyan(); }
 
 /* ---------- 导入 / 导出 ---------- */
 function triggerDownload(blob, name){
@@ -3039,8 +3057,35 @@ function bind(){
   try{ mdEnabled = localStorage.getItem('leaf-md') !== '0'; }catch(e){ mdEnabled = true; }
   syncMdUI();
 
-  // ---- FAB（21:16 复活）：底部居中主入口，点它以非线性动画唤出输入面板 ----
-  $('fabBtn').onclick = function(){ expandQuick(); };
+  // ---- FAB：点击唤出输入面板；按住向上推超过阈值则触发「一言」彩蛋 ----
+  var fabSwipe = { x:0, y:0, tracking:false, swiped:false };
+  var FAB_SWIPE_TH = 44, fabSwallowClickUntil = 0;
+  function fabDown(x, y){ fabSwipe.x=x; fabSwipe.y=y; fabSwipe.tracking=true; fabSwipe.swiped=false; }
+  function fabMove(x, y, ev){
+    if(!fabSwipe.tracking) return;
+    var dy = fabSwipe.y - y, dx = x - fabSwipe.x;
+    if(dy > 6 && ev && ev.cancelable) ev.preventDefault();      // 有上滑趋势就别让页面跟着滚
+    if(dy > FAB_SWIPE_TH && dy > Math.abs(dx)*1.4) fabSwipe.swiped = true;
+  }
+  function fabUp(){
+    if(!fabSwipe.tracking) return false;
+    var fired = fabSwipe.swiped;
+    fabSwipe.tracking=false; fabSwipe.swiped=false;
+    if(fired){
+      fabSwallowClickUntil = Date.now() + 500;                  // 吞掉合成 click，别弹出输入面板盖住彩蛋
+      tryYiyan();
+    }
+    return fired;
+  }
+  var fabEl = $('fabBtn');
+  fabEl.addEventListener('touchstart', function(e){ var t=e.changedTouches[0]; fabDown(t.clientX,t.clientY); }, {passive:true});
+  fabEl.addEventListener('touchmove', function(e){ var t=e.changedTouches[0]; fabMove(t.clientX,t.clientY,e); }, {passive:false});
+  fabEl.addEventListener('touchend', function(){ fabUp(); }, {passive:true});
+  fabEl.addEventListener('touchcancel', function(){ fabSwipe.tracking=false; fabSwipe.swiped=false; }, {passive:true});
+  fabEl.addEventListener('mousedown', function(e){ if(e.button===0) fabDown(e.clientX,e.clientY); });
+  document.addEventListener('mousemove', function(e){ fabMove(e.clientX,e.clientY); });
+  document.addEventListener('mouseup', function(){ fabUp(); });
+  fabEl.onclick = function(){ if(Date.now() < fabSwallowClickUntil){ fabSwallowClickUntil=0; return; } expandQuick(); };
 
   // ---- 三端输入：Pad / 电脑常驻 composer、手机底部 dock ----
   $('cpSend').onclick = submitComposer;
@@ -3091,10 +3136,11 @@ function bind(){
     e.target.value = ''; imgTarget = null;
   });
 
-  // 彩蛋触发：双击/长按纯文字 Logo
+  // 彩蛋触发口：手机端 FAB 上滑，桌面 / Pad 无 FAB → 双击或长按住纯文字 Logo
+  // （作者拍板：绝不为彩蛋在桌面端专门塞一颗 FAB，那里用现成的 Logo 入口）
   $('headerLogo').addEventListener('dblclick', function(){ tryYiyan(); });
   var logoPressTimer = null, logoLongPressed = false;
-  $('headerLogo').addEventListener('pointerdown', function(e){
+  $('headerLogo').addEventListener('pointerdown', function(){
     logoLongPressed = false;
     logoPressTimer = setTimeout(function(){ logoLongPressed = true; tryYiyan(); logoPressTimer = null; }, 600);
   });
@@ -3102,7 +3148,7 @@ function bind(){
     $('headerLogo').addEventListener(evt, function(){ if(logoPressTimer){ clearTimeout(logoPressTimer); logoPressTimer = null; } });
   });
 
-  // 汉堡菜单
+  // 汉堡菜单（长按 Logo 后紧随的那次点击不算开侧栏，避免误触）
   $('menuToggle').onclick = function(){ if(logoLongPressed){ logoLongPressed = false; return; } toggleSidebar(); };
   // 桌面端侧栏收起 / 展开开关（仅桌面可见；手机不显示，由汉堡抽屉负责）。
   // 260ms 锁：宽度归零有过渡，连点时后一次会落在「正在收起的侧栏」上，读起来像过于灵敏。
